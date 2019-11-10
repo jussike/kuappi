@@ -1,0 +1,2 @@
+TEMP = 'temperature'
+HUM = 'humidity'

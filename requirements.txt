@@ -1,0 +1,7 @@
+mitemp-bt
+btlewrap
+bluepy
+pyserial
+pywemo
+redis
+paho-mqtt
