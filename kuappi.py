@@ -13,8 +13,11 @@ class Temp:
         self.device_file = device_folder + '/w1_slave'
 
     def read_temp_raw(self):
-        with open(self.device_file, 'r') as fh:
-            return fh.readlines()
+        try:
+            with open(self.device_file, 'r') as fh:
+                return fh.readlines()
+        except:
+            print ('error reading raw data')
  
     def read_temp(self):
         lines = self.read_temp_raw()
