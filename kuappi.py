@@ -7,6 +7,11 @@ import redis
 current_millis = lambda: int(round(time.time() * 1000))
 
 class Temp:
+    soft_hi_limit = 5
+    soft_low_limit = 3
+    hard_hi_limit = 7
+    hard_low_limit = 0
+
     def __init__(self):
         base_dir = '/sys/bus/w1/devices/'
         device_folder = glob.glob(base_dir + '28*')[0]
@@ -17,11 +22,11 @@ class Temp:
             with open(self.device_file, 'r') as fh:
                 return fh.readlines()
         except:
-            print ('error reading raw data')
+            print('error reading raw data')
  
     def read_temp(self):
         lines = self.read_temp_raw()
-        while lines[0].strip()[-3:] != 'YES':
+        while lines is None or lines[0].strip()[-3:] != 'YES':
             time.sleep(0.2)
             lines = self.read_temp_raw()
 
@@ -41,33 +46,58 @@ class Redis:
             self.redis = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
         except Exception as e:
             print(e)
-        self.key = "temp"
 
-    def add(self, temp):
+    def add(self, value, key='temp'):
         c_time = current_millis()
-        self.redis.zadd(self.key, {"%s:%s" % (c_time, temp): c_time})
+        self.redis.zadd(key, {"%s:%s" % (c_time, value): c_time})
 
-    def get_all(self):
-        values = self.redis.zrangebyscore(self.key, 0, current_millis())
-        return {k: v for i in values for k, v in zip([i.split(':')[0]],[i.split(':')[1]])}
+    def add_multi(self, values, keys=['temp', 'switch']):
+        kv_dict = dict(zip(keys, values))
+        c_time = current_millis()
+        for key, value in kv_dict.items():
+            self.redis.zadd(key, {"%s:%s" % (c_time, value): c_time})
+
+class Wemo:
+    def __init__(self):
+        wemo = pywemo.discover_devices()
+        self.wemo = wemo[0] # Crash if device not found
+        self.on()
+
+    def on(self):
+        try:
+            self.wemo.on()
+            self.state = True
+        except:
+            print('wemo error')
+
+    def off(self):
+        try:
+            self.wemo.off()
+            self.state = False
+        except:
+            print('wemo error')
 
 def main():
-    wemo = pywemo.discover_devices()
-    if len(wemo) < 1:
-        print ("kusi")
-    wemo = wemo[0]
     redis = Redis()
     temp = Temp()
+    wemo = Wemo()
 
-    for _ in range(5):
-        _temp = temp.read_temp()
-        redis.add(_temp)
-        print (_temp)
-        time.sleep(1)
-        if temp.read_temp() > _temp:
-            print ("nous")
-            wemo.toggle()
-    a=redis.get_all()
-    print(a)
+    while True:
+        try:
+            _temp = temp.read_temp()
+            if _temp >= temp.soft_hi_limit and wemo.state is False:
+                wemo.on()
+            elif _temp <= temp.soft_low_limit and wemo.state is True:
+                wemo.off()
+            elif _temp > temp.hard_hi_limit:
+                wemo.on()
+            elif _temp < temp.hard_low_limit:
+                wemo.off()
+            print('%s %s' % (_temp, wemo.state))
+            redis.add_multi([_temp, 1 if wemo.state else 0])
+            time.sleep(10)
+        except KeyboardInterrupt:
+            print("stopping")
+            break
 
 main()
