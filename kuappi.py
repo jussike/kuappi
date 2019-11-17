@@ -2,6 +2,16 @@ import glob
 import time
 import pywemo
 import redis
+import os
+import logging
+
+
+def setup_logging(log_file=None):
+    log_format = '%(asctime)s - %(levelname)s - %(message)s'
+    formatter = logging.Formatter(log_format)
+    logging.basicConfig(filename=log_file,
+                        format=log_format,
+                        level=logging.DEBUG)
 
 
 current_millis = lambda: int(round(time.time() * 1000))
@@ -22,7 +32,7 @@ class Temp:
             with open(self.device_file, 'r') as fh:
                 return fh.readlines()
         except:
-            print('error reading raw data')
+            logging.error('error reading raw data')
  
     def read_temp(self):
         lines = self.read_temp_raw()
@@ -45,7 +55,7 @@ class Redis:
         try:
             self.redis = redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
         except Exception as e:
-            print(e)
+            logging.exception(e)
 
     def add(self, value, key='temp'):
         c_time = current_millis()
@@ -68,16 +78,17 @@ class Wemo:
             self.wemo.on()
             self.state = True
         except:
-            print('wemo error')
+            logging.error('wemo error (on)')
 
     def off(self):
         try:
             self.wemo.off()
             self.state = False
         except:
-            print('wemo error')
+            logging.error('wemo error (off)')
 
 def main():
+    setup_logging('/tmp/log')
     redis = Redis()
     temp = Temp()
     wemo = Wemo()
@@ -93,11 +104,11 @@ def main():
                 wemo.on()
             elif _temp < temp.hard_low_limit:
                 wemo.off()
-            print('%s %s' % (_temp, wemo.state))
+            logging.debug('%s %s' % (_temp, wemo.state))
             redis.add_multi([_temp, 1 if wemo.state else 0])
-            time.sleep(10)
+            time.sleep(30)
         except KeyboardInterrupt:
-            print("stopping")
+            logging.info("stopping")
             break
 
 main()

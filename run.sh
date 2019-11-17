@@ -1,1 +1,1 @@
-python3 -u kuappi.py 2>&1 | tee -a /tmp/log
+python3 -u kuappi.py
