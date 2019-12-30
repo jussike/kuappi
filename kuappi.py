@@ -5,6 +5,8 @@ import redis
 import os
 import logging
 
+import RPi.GPIO as GPIO
+
 
 def setup_logging(log_file=None):
     log_format = '%(asctime)s - %(levelname)s - %(message)s'
@@ -17,8 +19,8 @@ def setup_logging(log_file=None):
 current_millis = lambda: int(round(time.time() * 1000))
 
 class Temp:
-    soft_hi_limit = 5
-    soft_low_limit = 3
+    soft_hi_limit = 4.8
+    soft_low_limit = 3.3
     hard_hi_limit = 7
     hard_low_limit = 0
 
@@ -67,6 +69,7 @@ class Redis:
         for key, value in kv_dict.items():
             self.redis.zadd(key, {"%s:%s" % (c_time, value): c_time})
 
+
 class Wemo:
     def __init__(self):
         wemo = pywemo.discover_devices()
@@ -87,28 +90,72 @@ class Wemo:
         except:
             logging.error('wemo error (off)')
 
+
+class Control:
+    def __init__(self):
+        self.controls = None
+    def set_controls(self, controls):
+        self.controls = controls
+    def on(self):
+        for control in self.controls:
+            control.on()
+    def off(self):
+        for control in self.controls:
+            control.off()
+    @property
+    def state(self):
+        return all([v.state for v in self.controls])
+
+
+class KuappiGPIO:
+    def __init__(self):
+        self.pin = 17
+        #GPIO.setmode(GPIO.BOARD)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.pin, GPIO.OUT, initial=GPIO.HIGH)
+        self.state = True
+
+    def on(self):
+        try:
+            GPIO.output(self.pin, True)
+            self.state = True
+        except:
+            logging.error('GPIO error when setting True')
+
+    def off(self):
+        try:
+            GPIO.output(self.pin, False)
+            self.state = False
+        except:
+            logging.error('GPIO error when setting False')
+
 def main():
     setup_logging('/tmp/log')
     redis = Redis()
     temp = Temp()
     wemo = Wemo()
+    gpio = KuappiGPIO()
+    ctrl = Control()
+    ctrl.set_controls((wemo, gpio))
 
     while True:
         try:
             _temp = temp.read_temp()
-            if _temp >= temp.soft_hi_limit and wemo.state is False:
-                wemo.on()
-            elif _temp <= temp.soft_low_limit and wemo.state is True:
-                wemo.off()
+            if _temp >= temp.soft_hi_limit and ctrl.state is False:
+                ctrl.on()
+            elif _temp <= temp.soft_low_limit and ctrl.state is True:
+                ctrl.off()
             elif _temp > temp.hard_hi_limit:
-                wemo.on()
+                ctrl.on()
             elif _temp < temp.hard_low_limit:
-                wemo.off()
-            logging.debug('%s %s' % (_temp, wemo.state))
-            redis.add_multi([_temp, 1 if wemo.state else 0])
+                ctrl.off()
+            logging.debug('%s %s' % (_temp, ctrl.state))
+            redis.add_multi([_temp, 1 if ctrl.state else 0])
             time.sleep(30)
         except KeyboardInterrupt:
             logging.info("stopping")
             break
 
+
 main()
+GPIO.cleanup(channel)
