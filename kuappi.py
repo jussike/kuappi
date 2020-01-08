@@ -1,11 +1,25 @@
+from abc import ABCMeta, abstractmethod, abstractproperty
 import glob
-import time
-import pywemo
-import redis
-import os
 import logging
+import os
+import time
 
-import RPi.GPIO as GPIO
+import redis
+
+try:
+    import pywemo
+    wemo_imported = True
+except:
+    wemo_imported = False
+
+try:
+    import RPi.GPIO as GPIO
+    rpi_gpio_imported = True
+except:
+    rpi_gpio_imported = False
+
+
+current_millis = lambda: int(round(time.time() * 1000))
 
 
 def setup_logging(log_file=None):
@@ -16,14 +30,13 @@ def setup_logging(log_file=None):
                         level=logging.DEBUG)
 
 
-current_millis = lambda: int(round(time.time() * 1000))
+class AbstractSensor(metaclass=ABCMeta):
+    @abstractmethod
+    def get_value():
+        pass
 
-class Temp:
-    soft_hi_limit = 4.8
-    soft_low_limit = 3.3
-    hard_hi_limit = 7
-    hard_low_limit = 0
 
+class Temp(AbstractSensor):
     def __init__(self):
         base_dir = '/sys/bus/w1/devices/'
         device_folder = glob.glob(base_dir + '28*')[0]
@@ -35,7 +48,7 @@ class Temp:
                 return fh.readlines()
         except:
             logging.error('error reading raw data')
- 
+
     def read_temp(self):
         lines = self.read_temp_raw()
         while lines is None or lines[0].strip()[-3:] != 'YES':
@@ -47,6 +60,33 @@ class Temp:
             temp_string = lines[1][equals_pos+2:]
             temp_c = float(temp_string) / 1000.0
             return temp_c
+
+    def get_value(self):
+        return self.read_temp()
+
+
+class AbstractControl(metaclass=ABCMeta):
+    @abstractmethod
+    def get_decision(self, value, state=None):
+        pass
+
+
+class TempControl(AbstractControl):
+    soft_hi_limit = 4.8
+    soft_low_limit = 3.3
+    hard_hi_limit = 7
+    hard_low_limit = 0
+
+    def get_decision(self, temp, output_state=None):
+        if temp >= self.soft_hi_limit and output_state is False:
+            return True
+        elif temp <= self.soft_low_limit and output_state is True:
+            return False
+        elif temp > self.hard_hi_limit:
+            return True
+        elif temp < self.hard_low_limit:
+            return False
+        return None
 
 
 class Redis:
@@ -63,7 +103,7 @@ class Redis:
         c_time = current_millis()
         self.redis.zadd(key, {"%s:%s" % (c_time, value): c_time})
 
-    def add_multi(self, values, keys=['temp', 'switch']):
+    def add_multi(self, values, keys=('temp', 'switch')):
         kv_dict = dict(zip(keys, values))
         c_time = current_millis()
         for key, value in kv_dict.items():
@@ -91,26 +131,25 @@ class Wemo:
             logging.error('wemo error (off)')
 
 
-class Control:
-    def __init__(self):
-        self.controls = None
-    def set_controls(self, controls):
-        self.controls = controls
+class OutputControl:
+    def __init__(self, outputs=None):
+        self.outputs = outputs
+    def set_outputs(self, outputs):
+        self.outputs = outputs
     def on(self):
-        for control in self.controls:
-            control.on()
+        for output in self.outputs:
+            output.on()
     def off(self):
-        for control in self.controls:
-            control.off()
+        for output in self.outputs:
+            output.off()
     @property
     def state(self):
-        return all([v.state for v in self.controls])
+        return all(v.state for v in self.outputs)
 
 
 class KuappiGPIO:
     def __init__(self):
         self.pin = 17
-        #GPIO.setmode(GPIO.BOARD)
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.pin, GPIO.OUT, initial=GPIO.HIGH)
         self.state = True
@@ -129,28 +168,33 @@ class KuappiGPIO:
         except:
             logging.error('GPIO error when setting False')
 
+
+def create_instance(sensor_class):
+    return sensor_class()
+
+
 def main():
     setup_logging('/tmp/log')
     redis = Redis()
-    temp = Temp()
-    wemo = Wemo()
-    gpio = KuappiGPIO()
-    ctrl = Control()
-    ctrl.set_controls((wemo, gpio))
+    outputs = []
+    if wemo_imported:
+        outputs.append(Wemo())
+    if rpi_gpio_imported:
+        outputs.append(KuappiGPIO())
+    output = OutputControl()
+    output.set_outputs(outputs)
+    sensor = create_instance(Temp)
+    control = create_instance(TempControl)
 
     while True:
         try:
-            _temp = temp.read_temp()
-            if _temp >= temp.soft_hi_limit and ctrl.state is False:
-                ctrl.on()
-            elif _temp <= temp.soft_low_limit and ctrl.state is True:
-                ctrl.off()
-            elif _temp > temp.hard_hi_limit:
-                ctrl.on()
-            elif _temp < temp.hard_low_limit:
-                ctrl.off()
-            logging.debug('%s %s' % (_temp, ctrl.state))
-            redis.add_multi([_temp, 1 if ctrl.state else 0])
+            value = sensor.get_value()
+            if control.get_decision(value, output.state) is True:
+                output.on()
+            elif control.get_decision(value, output.state) is False:
+                output.off()
+            logging.debug('%s %s' % (value, output.state))
+            redis.add_multi((value, 1 if output.state else 0))
             time.sleep(30)
         except KeyboardInterrupt:
             logging.info("stopping")
