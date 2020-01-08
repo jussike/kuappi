@@ -1,3 +1,4 @@
+
 from abc import ABCMeta, abstractmethod, abstractproperty
 import glob
 import logging
@@ -6,17 +7,17 @@ import time
 
 import redis
 
-try:
-    import pywemo
-    wemo_imported = True
-except:
-    wemo_imported = False
+CONFIG = {
+    'controls': (
+        'pywemo',
+        'rpi_gpio'
+    )
+}
 
-try:
+if 'pywemo' in CONFIG.get('controls'):
+    import pywemo
+if 'rpi_gpio' in CONFIG.get('controls'):
     import RPi.GPIO as GPIO
-    rpi_gpio_imported = True
-except:
-    rpi_gpio_imported = False
 
 
 current_millis = lambda: int(round(time.time() * 1000))
@@ -177,9 +178,9 @@ def main():
     setup_logging('/tmp/log')
     redis = Redis()
     outputs = []
-    if wemo_imported:
+    if 'pywemo' in CONFIG.get('controls'):
         outputs.append(Wemo())
-    if rpi_gpio_imported:
+    if 'rpi_gpio' in CONFIG.get('controls'):
         outputs.append(KuappiGPIO())
     output = OutputControl()
     output.set_outputs(outputs)
