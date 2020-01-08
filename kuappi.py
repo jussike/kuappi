@@ -9,8 +9,8 @@ import redis
 
 CONFIG = {
     'controls': (
-        'pywemo',
-        'rpi_gpio'
+        #'pywemo',
+        'rpi_gpio',
     )
 }
 
@@ -29,6 +29,7 @@ def setup_logging(log_file=None):
     logging.basicConfig(filename=log_file,
                         format=log_format,
                         level=logging.DEBUG)
+    logging.info('Logging is set')
 
 
 class AbstractSensor(metaclass=ABCMeta):
@@ -180,8 +181,10 @@ def main():
     outputs = []
     if 'pywemo' in CONFIG.get('controls'):
         outputs.append(Wemo())
+        logging.info('Controlling wemo switch')
     if 'rpi_gpio' in CONFIG.get('controls'):
         outputs.append(KuappiGPIO())
+        logging.info('Controlling GPIO')
     output = OutputControl()
     output.set_outputs(outputs)
     sensor = create_instance(Temp)
