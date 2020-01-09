@@ -2,8 +2,6 @@ import logging
 import redis
 import time
 
-# TODO: Setup logging?
-
 current_millis = lambda: int(round(time.time() * 1000))
 
 

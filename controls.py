@@ -8,7 +8,6 @@ if 'pywemo' in CONFIG.get('controls'):
 if 'rpi_gpio' in CONFIG.get('controls'):
     import RPi.GPIO as GPIO
 
-#TODO: setup logging?
 
 class Wemo(AbstractSwitch):
     def __init__(self):

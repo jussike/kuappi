@@ -39,6 +39,7 @@ class Kuappi:
         signal.signal(signal.SIGTERM, self.output.cleanup)
 
     def loop(self):
+        logging.info('Starting main loop')
         while True:
             try:
                 value = self.sensor.get_value()
@@ -53,5 +54,7 @@ class Kuappi:
                 logging.info("stopping")
                 self.output.cleanup()
                 break
+            except:
+                logging.exception("Unknown exception")
 
 Kuappi().loop()
