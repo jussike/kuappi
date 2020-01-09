@@ -1,5 +1,5 @@
 import logging
-import time
+from threading import Event
 import signal
 
 from config import CONFIG
@@ -34,11 +34,12 @@ class Kuappi:
         control_cls = globals()[sensor + 'Control']
         self.sensor = sensor_cls()
         self.control = control_cls()
-        signal.signal(signal.SIGTERM, self.output.cleanup)
+        self.event = Event()
+        signal.signal(signal.SIGTERM, self.cleanup)
 
     def loop(self):
         logging.info('Starting main loop')
-        while True:
+        while not self.event.is_set():
             try:
                 value = self.sensor.get_value()
                 if self.control.get_decision(value, self.output.state) is True:
@@ -47,12 +48,16 @@ class Kuappi:
                     self.output.off()
                 logging.debug('%s %s' % (value, self.output.state))
                 self.redis.add_multi((value, 1 if self.output.state else 0))
-                time.sleep(30)
+                self.event.wait(30)
             except KeyboardInterrupt:
                 logging.info("stopping")
                 self.output.cleanup()
                 break
             except:
                 logging.exception("Unknown exception")
+
+    def cleanup(self, *_):
+        self.output.cleanup()
+        self.event.set()
 
 Kuappi().loop()
