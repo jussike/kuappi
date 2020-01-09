@@ -5,7 +5,7 @@ import time
 from abstract import AbstractSensor, AbstractControl
 
 
-class Temp(AbstractSensor):
+class W1Temp(AbstractSensor):
     def __init__(self):
         base_dir = '/sys/bus/w1/devices/'
         device_folder = glob.glob(base_dir + '28*')[0]
@@ -34,7 +34,7 @@ class Temp(AbstractSensor):
         return self.read_temp()
 
 
-class TempControl(AbstractControl):
+class W1TempControl(AbstractControl):
     soft_hi_limit = 4.8
     soft_low_limit = 3.3
     hard_hi_limit = 7

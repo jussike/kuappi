@@ -3,9 +3,9 @@ import logging
 from config import CONFIG
 from abstract import AbstractSwitch
 
-if 'pywemo' in CONFIG.get('controls'):
+if 'Wemo' in CONFIG.get('controls'):
     import pywemo
-if 'rpi_gpio' in CONFIG.get('controls'):
+if 'KuappiGPIO' in CONFIG.get('controls'):
     import RPi.GPIO as GPIO
 
 

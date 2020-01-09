@@ -1,6 +1,8 @@
 CONFIG = {
     'controls': (
-        #'pywemo',
-        'rpi_gpio',
-    )
+        #'Wemo',
+        'KuappiGPIO',
+    ),
+    'sensor': 'W1Temp',
+    #'sensor': 'Mitemp',
 }

@@ -4,7 +4,8 @@ import signal
 
 from config import CONFIG
 from controls import Wemo, KuappiGPIO, OutputControl
-from temp import Temp, TempControl
+from mitemp import MiTemp, MiTempControl
+from temp import W1Temp, W1TempControl
 from storage import Redis
 
 
@@ -17,25 +18,22 @@ def setup_logging(log_file=None):
     logging.info('Logging is set')
 
 
-def create_instance(sensor_class):
-    return sensor_class()
-
-
 class Kuappi:
     def __init__(self):
         setup_logging('/tmp/log')
         self.redis = Redis()
         outputs = []
-        if 'pywemo' in CONFIG.get('controls'):
-            outputs.append(Wemo())
-            logging.info('Controlling wemo switch')
-        if 'rpi_gpio' in CONFIG.get('controls'):
-            outputs.append(KuappiGPIO())
-            logging.info('Controlling GPIO')
+        for control in CONFIG.get('controls'):
+            cls = globals()[control]
+            outputs.append(cls())
+            logging.info('Using control %s', control)
         self.output = OutputControl()
         self.output.set_outputs(outputs)
-        self.sensor = create_instance(Temp)
-        self.control = create_instance(TempControl)
+        sensor = CONFIG.get('sensor')
+        sensor_cls = globals()[sensor]
+        control_cls = globals()[sensor + 'Control']
+        self.sensor = sensor_cls()
+        self.control = control_cls()
         signal.signal(signal.SIGTERM, self.output.cleanup)
 
     def loop(self):
