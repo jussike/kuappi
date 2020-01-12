@@ -1,7 +1,7 @@
 import logging
 
 from config import CONFIG
-from abstract import AbstractSwitch
+from abstract import AbstractSwitch, AbstractControl
 
 if 'Wemo' in CONFIG.get('controls'):
     import pywemo
@@ -38,27 +38,31 @@ class KuappiGPIO(AbstractSwitch):
         self.pin = 17
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.pin, GPIO.OUT, initial=GPIO.HIGH)
-        self.state = True
+        self._state = True
 
     def on(self):
         try:
             GPIO.output(self.pin, True)
-            self.state = True
+            self._state = True
         except:
             logging.error('GPIO error when setting True')
 
     def off(self):
         try:
             GPIO.output(self.pin, False)
-            self.state = False
+            self._state = False
         except:
             logging.error('GPIO error when setting False')
 
     def cleanup(self):
         GPIO.cleanup(self.pin)
 
+    @property
+    def state(self):
+        return GPIO.input(self.pin) and self._state is True
 
-class OutputControl(AbstractSwitch):
+
+class OutputControl(AbstractControl, AbstractSwitch):
     def __init__(self, outputs=None):
         self.outputs = outputs
 
@@ -67,16 +71,37 @@ class OutputControl(AbstractSwitch):
 
     def on(self):
         for output in self.outputs:
-            output.on()
+            if isinstance(output, AbstractSwitch):
+                output.on()
+            else:
+                logging.error('%s is not instance of AbstractSwitch', output)
 
     def off(self):
         for output in self.outputs:
-            output.off()
+            if isinstance(output, AbstractSwitch):
+                output.off()
+            else:
+                logging.error('%s is not instance of AbstractSwitch', output)
 
     def cleanup(self):
         for output in self.outputs:
-            output.cleanup()
+            if isinstance(output, AbstractSwitch):
+                output.cleanup()
+            else:
+                logging.error('%s is not instance of AbstractSwitch', output)
 
     @property
     def state(self):
         return all(v.state for v in self.outputs)
+
+    def control(self, param):
+        if param is True:
+            self.on()
+        elif param is False:
+            self.off()
+        elif isinstance(param, int):
+            for output in self.outputs:
+                if isinstance(output, AbstractControl):
+                    output.control(param)
+                else:
+                    logging.error('%s is not instance of AbstractControl', output)

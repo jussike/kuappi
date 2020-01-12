@@ -2,7 +2,7 @@ import glob
 import logging
 import time
 
-from abstract import AbstractSensor, AbstractControl
+from abstract import AbstractSensor, AbstractDecision
 
 
 class W1Temp(AbstractSensor):
@@ -34,7 +34,7 @@ class W1Temp(AbstractSensor):
         return self.read_temp()
 
 
-class W1TempControl(AbstractControl):
+class W1TempControl(AbstractDecision):
     soft_hi_limit = 4.8
     soft_low_limit = 3.3
     hard_hi_limit = 7

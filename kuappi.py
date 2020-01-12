@@ -42,10 +42,8 @@ class Kuappi:
         while not self.event.is_set():
             try:
                 value = self.sensor.get_value()
-                if self.control.get_decision(value, self.output.state) is True:
-                    self.output.on()
-                elif self.control.get_decision(value, self.output.state) is False:
-                    self.output.off()
+                decision = self.control.get_decision(value, self.output.state)
+                self.output.control(decision)
                 logging.debug('%s %s' % (value, self.output.state))
                 self.redis.add_multi((value, 1 if self.output.state else 0))
                 self.event.wait(30)

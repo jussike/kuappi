@@ -7,10 +7,11 @@ class AbstractSensor(metaclass=ABCMeta):
         pass
 
 
-class AbstractControl(metaclass=ABCMeta):
+class AbstractDecision(metaclass=ABCMeta):
     @abstractmethod
     def get_decision(self, value, state=None):
         pass
+
 
 class AbstractSwitch(metaclass=ABCMeta):
     @abstractmethod
@@ -21,4 +22,10 @@ class AbstractSwitch(metaclass=ABCMeta):
         pass
     @abstractmethod
     def cleanup(self):
+        pass
+
+
+class AbstractControl(metaclass=ABCMeta):
+    @abstractmethod
+    def control(self, param):
         pass

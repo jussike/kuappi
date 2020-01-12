@@ -1,6 +1,6 @@
 import logging
 
-from abstract import AbstractSensor, AbstractControl
+from abstract import AbstractSensor, AbstractDecision
 from config import CONFIG
 
 
@@ -28,7 +28,20 @@ class MiTemp(AbstractSensor):
         return self.read_values()
 
 
-class MiTempControl(AbstractControl):
+class MiTempControl(AbstractDecision):
+    hum_full_limit = 70
+    hum_med_limit = 50
+    hum_low_limit = 35
 
-    def get_decision(self, temp, output_state=None):
-        return None
+    def get_decision(self, value, output_state=None):
+        temp, hum = value
+        decision = False
+        if hum >= hum_full_limit:
+            return 8
+        elif hum >= hum_med_limit:
+            return 6
+        elif hum >= hum_low_limit:
+            return 5
+        else:
+            return 4
+
