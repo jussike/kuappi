@@ -87,8 +87,7 @@ class OutputControl(AbstractControl, AbstractSwitch):
         for output in self.outputs:
             if isinstance(output, AbstractSwitch):
                 output.cleanup()
-            else:
-                logging.error('%s is not instance of AbstractSwitch', output)
+            # Other types of outputs don't need this cleanup
 
     @property
     def state(self):

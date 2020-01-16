@@ -4,6 +4,7 @@ import signal
 
 from config import CONFIG
 from controls import Wemo, KuappiGPIO, OutputControl
+from valloxcontrol import ValloxControl
 from mitemp import MiTemp, MiTempControl
 from temp import W1Temp, W1TempControl
 from storage import Redis

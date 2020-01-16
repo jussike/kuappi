@@ -4,14 +4,14 @@ from abstract import AbstractSensor, AbstractDecision
 from config import CONFIG
 
 
-if 'Mitemp' == CONFIG.get('sensor'):
+if 'MiTemp' == CONFIG.get('sensor'):
     from mitemp_bt.mitemp_bt_poller import MiTempBtPoller
     from btlewrap.bluepy import BluepyBackend
 
 
 class MiTemp(AbstractSensor):
     def __init__(self):
-        self.poller = MiTempBtPoller('58:2D:34:34:4C:3E', BluepyBackend)
+        self.poller = MiTempBtPoller('58:2D:34:34:4C:3E', BluepyBackend, cache_timeout=300, retries=10)
 
     def read_values(self):
         temp = None
@@ -36,12 +36,16 @@ class MiTempControl(AbstractDecision):
     def get_decision(self, value, output_state=None):
         temp, hum = value
         decision = False
-        if hum >= hum_full_limit:
+        if hum >= self.hum_full_limit:
+            logging.info('Humidity %s, setting 8', hum)
             return 8
-        elif hum >= hum_med_limit:
+        elif hum >= self.hum_med_limit:
+            logging.info('Humidity %s, setting 6', hum)
             return 6
-        elif hum >= hum_low_limit:
+        elif hum >= self.hum_low_limit:
+            logging.info('Humidity %s, setting 5', hum)
             return 5
         else:
+            logging.info('Humidity %s, setting 4', hum)
             return 4
 
