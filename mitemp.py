@@ -3,15 +3,14 @@ import logging
 from abstract import AbstractSensor, AbstractDecision
 from config import CONFIG
 
-
-if 'MiTemp' == CONFIG.get('sensor'):
-    from mitemp_bt.mitemp_bt_poller import MiTempBtPoller
-    from btlewrap.bluepy import BluepyBackend
+from mitemp_bt.mitemp_bt_poller import MiTempBtPoller
+from btlewrap.bluepy import BluepyBackend
 
 
 class MiTemp(AbstractSensor):
     def __init__(self):
-        self.poller = MiTempBtPoller('58:2D:34:34:4C:3E', BluepyBackend, cache_timeout=300, retries=10)
+        cache_timeout = CONFIG.get('mitemp_cache_timeout', 300)
+        self.poller = MiTempBtPoller('58:2D:34:34:4C:3E', BluepyBackend, cache_timeout=cache_timeout, retries=10)
 
     def read_values(self):
         temp = None

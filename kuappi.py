@@ -3,9 +3,17 @@ from threading import Event
 import signal
 
 from config import CONFIG
-from controls import Wemo, KuappiGPIO, OutputControl
+
+if 'Wemo' in CONFIG.get('controls'):
+    from controls import Wemo
+if 'KuappiGPIO' in CONFIG.get('controls'):
+    from controls import KuappiGPIO
+if 'MiTemp' == CONFIG.get('sensor'):
+    from mitemp import MiTemp, MiTempControl
+
+
+from controls import OutputControl
 from valloxcontrol import ValloxControl
-from mitemp import MiTemp, MiTempControl
 from temp import W1Temp, W1TempControl
 from storage import Redis
 
@@ -40,6 +48,7 @@ class Kuappi:
 
     def loop(self):
         logging.info('Starting main loop')
+        polling_freq = CONFIG.get('polling_freq', 60)
         while not self.event.is_set():
             try:
                 value = self.sensor.get_value()
@@ -47,7 +56,7 @@ class Kuappi:
                 self.output.control(decision)
                 logging.debug('%s %s' % (value, self.output.state))
                 self.redis.add_multi((value, 1 if self.output.state else 0))
-                self.event.wait(30)
+                self.event.wait(polling_freq)
             except KeyboardInterrupt:
                 logging.info("stopping")
                 self.output.cleanup()

@@ -3,7 +3,6 @@ import serial
 import time
 import threading
 
-from config import CONFIG
 from abstract import AbstractSwitch, AbstractControl
 
 
