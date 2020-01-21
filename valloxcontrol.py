@@ -57,6 +57,7 @@ class ValloxSerial:
         checksum = 0
         for byte in control_data:
             checksum += byte
+        checksum = checksum & 0xff
         control_data += bytes((checksum,))
         return control_data
 
