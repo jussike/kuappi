@@ -28,20 +28,24 @@ class MiTemp(AbstractSensor):
 
 
 class MiTempControl(AbstractDecision):
-    hum_full_limit = 70
-    hum_med_limit = 50
-    hum_low_limit = 35
+    hum_8_limit = 92
+    hum_7_limit = 80
+    hum_6_limit = 60
+    hum_5_limit = 35
 
     def get_decision(self, value, output_state=None):
         temp, hum = value
         decision = False
-        if hum >= self.hum_full_limit:
+        if hum >= self.hum_8_limit:
             logging.info('Humidity %s, setting 8', hum)
             return 8
-        elif hum >= self.hum_med_limit:
+        elif hum >= self.hum_7_limit:
+            logging.info('Humidity %s, setting 7', hum)
+            return 7
+        elif hum >= self.hum_6_limit:
             logging.info('Humidity %s, setting 6', hum)
             return 6
-        elif hum >= self.hum_low_limit:
+        elif hum >= self.hum_5_limit:
             logging.info('Humidity %s, setting 5', hum)
             return 5
         else:
