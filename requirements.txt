@@ -1,0 +1,4 @@
+mitemp-bt
+pyserial
+pywemo
+redis

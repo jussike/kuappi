@@ -3,7 +3,7 @@ import serial
 import time
 import threading
 
-from abstract import AbstractSwitch, AbstractControl
+from abstract import AbstractControl
 
 
 class ValloxControl(AbstractControl):
