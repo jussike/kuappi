@@ -36,21 +36,11 @@ class Kuappi:
     def __init__(self):
         setup_logging(CONFIG.get('log_file'))
         self.redis = Redis()
-        controls = self.init_controls()
         self.controller = Controller()
-        self.controller.set_controls(controls)
         self.sensor = globals()[CONFIG.get('sensor')]()
         self.decision = globals()[CONFIG.get('decision')]()
         self.event = Event()
         signal.signal(signal.SIGTERM, self.cleanup)
-
-    def init_controls(self):
-        controls = []
-        for control in CONFIG.get('controls'):
-            cls = globals()[control]
-            controls.append(cls())
-            logging.info('Using control %s', control)
-        return controls
 
     def loop(self):
         logging.info('Starting main loop')
