@@ -10,7 +10,7 @@ from btlewrap.bluepy import BluepyBackend
 class MiTemp(AbstractSensor):
     def __init__(self):
         cache_timeout = CONFIG.get('mitemp_cache_timeout', 300)
-        self.poller = MiTempBtPoller('58:2D:34:34:4C:3E', BluepyBackend, cache_timeout=cache_timeout, retries=10)
+        self.poller = MiTempBtPoller(CONFIG.get('mitemp_addr'), BluepyBackend, cache_timeout=cache_timeout, retries=10)
 
     def read_values(self):
         temp = None
