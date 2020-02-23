@@ -46,14 +46,20 @@ class ValloxSerial:
             8: b'\xff',
         }
     }
+    timeout = 3
 
     def __init__(self, control):
         self.ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=0.1)
         self.control = control
         self.checksum_byte = None
+        self.lock = threading.RLock()
 
     def get_control_data(self, destination, command, value):
-        control_data = self.system + self.sender + self.destinations[destination] + self.commands[command] + self.values[command][value]
+        control_data = self.system \
+                       + self.sender \
+                       + self.destinations[destination] \
+                       + self.commands[command] \
+                       + self.values[command][value]
         checksum = 0
         for byte in control_data:
             checksum += byte
@@ -63,8 +69,9 @@ class ValloxSerial:
 
     def set_speed(self, speed):
         control_data = self.get_control_data('host', 'speed', speed)
-        self.ser.write(control_data)
-        self.listen_ack(control_data[-1], speed)
+        with self.lock:
+            self.ser.write(control_data)
+            self.listen_ack(control_data[-1], speed)
 
     def listen_ack(self, checksum, state):
         listen_thread = threading.Thread(target=self.run, args=(checksum, state))
@@ -75,14 +82,17 @@ class ValloxSerial:
         self.ser.write(control_data)
 
     def run(self, checksum, state):
-        data = b''
-        while True:
-            while self.ser.in_waiting:
-                data += self.ser.read()
-            if len(data) > 0:
+        with self.lock:
+            data = b''
+            started = time.monotonic()
+            while time.monotonic() < started + self.timeout:
+                while self.ser.in_waiting:
+                    data += self.ser.read()
+                if len(data) == 0:
+                    time.sleep(0.1)
+                    continue
                 for byte in data:
                     if byte == checksum:
                         self.control.state = state
                         self.inform_remotes(state)
                         return
-            time.sleep(0.1)
