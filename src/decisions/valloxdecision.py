@@ -1,6 +1,7 @@
 import logging
 
 from abstract import AbstractDecision
+from common import HUM
 
 class ValloxDecision(AbstractDecision):
     hum_8_limit = 92
@@ -8,8 +9,8 @@ class ValloxDecision(AbstractDecision):
     hum_6_limit = 60
     hum_5_limit = 35
 
-    def get_decision(self, value, _=None):
-        temp, hum = value
+    def get_decision(self, data, _=None):
+        hum = data[HUM]
         if hum >= self.hum_8_limit:
             logging.info('Humidity %s, setting 8', hum)
             return 8

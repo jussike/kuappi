@@ -47,11 +47,11 @@ class Kuappi:
         polling_freq = CONFIG.get('polling_freq', 60)
         while not self.event.is_set():
             try:
-                value = self.sensor.get_value()
-                decision = self.decision.get_decision(value, self.controller.state)
+                data = self.sensor.get_data()
+                decision = self.decision.get_decision(data, self.controller.state)
                 self.controller.control(decision)
-                logging.debug('%s %s' % (value, self.controller.state))
-                self.redis.add_multi((value, 1 if self.controller.state else 0))
+                logging.debug('%s %s' % (data, self.controller.state))
+                self.redis.add_multi((data, 1 if self.controller.state else 0))
                 self.event.wait(polling_freq)
             except KeyboardInterrupt:
                 logging.info("stopping")

@@ -3,13 +3,13 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 class AbstractSensor(metaclass=ABCMeta):
     @abstractmethod
-    def get_value():
+    def get_data(self):
         pass
 
 
 class AbstractDecision(metaclass=ABCMeta):
     @abstractmethod
-    def get_decision(self, value, state=None):
+    def get_decision(self, data, state=None):
         pass
 
 

@@ -3,7 +3,7 @@ import logging
 import time
 
 from abstract import AbstractSensor
-
+from common import TEMP
 
 class W1Temp(AbstractSensor):
     def __init__(self):
@@ -30,5 +30,5 @@ class W1Temp(AbstractSensor):
             temp_c = float(temp_string) / 1000.0
             return temp_c
 
-    def get_value(self):
-        return self.read_temp()
+    def get_data(self):
+        return {TEMP: self.read_temp()}

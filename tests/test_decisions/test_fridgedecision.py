@@ -1,5 +1,6 @@
 import unittest
 
+from common import TEMP
 from decisions.fridgedecision import FridgeDecision
 
 class TestFridgeDecision(unittest.TestCase):
@@ -8,51 +9,56 @@ class TestFridgeDecision(unittest.TestCase):
         self.dec = FridgeDecision()
 
     def test_temp_below_hard_limit(self):
-        decision = self.dec.get_decision(-1)
+        temp = {TEMP: -1}
+        decision = self.dec.get_decision(temp)
         self.assertEqual(decision, False)
-        decision = self.dec.get_decision(-1, True)
+        decision = self.dec.get_decision(temp, True)
         self.assertEqual(decision, False)
-        decision = self.dec.get_decision(-1, False)
+        decision = self.dec.get_decision(temp, False)
         self.assertEqual(decision, False)
-        decision = self.dec.get_decision(-1, None)
+        decision = self.dec.get_decision(temp, None)
         self.assertEqual(decision, False)
 
     def test_temp_below_soft_limit(self):
-        decision = self.dec.get_decision(1)
+        temp = {TEMP: 1}
+        decision = self.dec.get_decision(temp)
         self.assertEqual(decision, None)
-        decision = self.dec.get_decision(1, True)
+        decision = self.dec.get_decision(temp, True)
         self.assertEqual(decision, False)
-        decision = self.dec.get_decision(1, False)
+        decision = self.dec.get_decision(temp, False)
         self.assertEqual(decision, None)
-        decision = self.dec.get_decision(1, None)
+        decision = self.dec.get_decision(temp, None)
         self.assertEqual(decision, None)
 
     def test_temp_between_limits(self):
-        decision = self.dec.get_decision(4)
+        temp = {TEMP: 4}
+        decision = self.dec.get_decision(temp)
         self.assertEqual(decision, None)
-        decision = self.dec.get_decision(4, True)
+        decision = self.dec.get_decision(temp, True)
         self.assertEqual(decision, None)
-        decision = self.dec.get_decision(4, False)
+        decision = self.dec.get_decision(temp, False)
         self.assertEqual(decision, None)
-        decision = self.dec.get_decision(4, None)
+        decision = self.dec.get_decision(temp, None)
         self.assertEqual(decision, None)
 
     def test_temp_over_soft_limit(self):
-        decision = self.dec.get_decision(6)
+        temp = {TEMP: 6}
+        decision = self.dec.get_decision(temp)
         self.assertEqual(decision, None)
-        decision = self.dec.get_decision(6, True)
+        decision = self.dec.get_decision(temp, True)
         self.assertEqual(decision, None)
-        decision = self.dec.get_decision(6, False)
+        decision = self.dec.get_decision(temp, False)
         self.assertEqual(decision, True)
-        decision = self.dec.get_decision(6, None)
+        decision = self.dec.get_decision(temp, None)
         self.assertEqual(decision, None)
 
     def test_temp_over_hard_limit(self):
-        decision = self.dec.get_decision(10)
+        temp = {TEMP: 10}
+        decision = self.dec.get_decision(temp)
         self.assertEqual(decision, True)
-        decision = self.dec.get_decision(10, True)
+        decision = self.dec.get_decision(temp, True)
         self.assertEqual(decision, True)
-        decision = self.dec.get_decision(10, False)
+        decision = self.dec.get_decision(temp, False)
         self.assertEqual(decision, True)
-        decision = self.dec.get_decision(10, None)
+        decision = self.dec.get_decision(temp, None)
         self.assertEqual(decision, True)
