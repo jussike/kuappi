@@ -12,6 +12,8 @@ if 'MiTemp' == CONFIG.get('sensor'):
     from sensors.mitemp import MiTemp
 if 'W1Temp' == CONFIG.get('sensor'):
     from sensors.w1temp import W1Temp
+if 'MqttSensor' == CONFIG.get('sensor'):
+    from sensors.mqtt import MqttSensor
 if 'FridgeDecision' == CONFIG.get('decision'):
     from decisions.fridgedecision import FridgeDecision
 if 'ValloxDecision' == CONFIG.get('decision'):
