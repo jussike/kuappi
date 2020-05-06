@@ -9,7 +9,7 @@ if 'KuappiGPIO' in CONFIG.get('controls'):
 
 class KuappiGPIO(AbstractSwitch):
     def __init__(self):
-        self.pin = 17
+        self.pin = CONFIG.get('gpio_pin')
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.pin, GPIO.OUT, initial=GPIO.HIGH)
         self._state = True
