@@ -3,6 +3,11 @@ import logging
 from abstract import AbstractSwitch, AbstractControl
 from config import CONFIG
 
+if 'Wemo' in CONFIG.get('controls'):
+    from controls.switches.wemo import Wemo
+if 'KuappiGPIO' in CONFIG.get('controls'):
+    from controls.switches.kuappigpio import KuappiGPIO
+
 
 class Controller(AbstractControl, AbstractSwitch):
     def __init__(self):

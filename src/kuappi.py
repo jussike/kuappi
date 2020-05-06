@@ -2,12 +2,9 @@ import logging
 from threading import Event
 import signal
 
+from common import TEMP
 from config import CONFIG
 
-if 'Wemo' in CONFIG.get('controls'):
-    from controls.switches.wemo import Wemo
-if 'KuappiGPIO' in CONFIG.get('controls'):
-    from controls.switches.kuappigpio import KuappiGPIO
 if 'MiTemp' == CONFIG.get('sensor'):
     from sensors.mitemp import MiTemp
 if 'W1Temp' == CONFIG.get('sensor'):
@@ -18,7 +15,7 @@ if 'FridgeDecision' == CONFIG.get('decision'):
     from decisions.fridgedecision import FridgeDecision
 if 'ValloxDecision' == CONFIG.get('decision'):
     from decisions.valloxdecision import ValloxDecision
-if 'use_redis' == True:
+if True == CONFIG.get('use_redis'):
     from storage.redis_storage import Redis
 else:
     from storage.null_storage import NullStorage as Redis
