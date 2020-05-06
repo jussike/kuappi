@@ -50,7 +50,7 @@ class Kuappi:
                 decision = self.decision.get_decision(data, self.controller.state)
                 self.controller.control(decision)
                 logging.debug('%s %s' % (data, self.controller.state))
-                self.redis.add_multi((data, 1 if self.controller.state else 0))
+                self.redis.add_multi((data[TEMP], 1 if self.controller.state else 0))
                 self.event.wait(polling_freq)
             except KeyboardInterrupt:
                 logging.info("stopping")

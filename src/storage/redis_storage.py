@@ -28,5 +28,6 @@ class Redis:
         kv_dict = dict(zip(keys, values))
         c_time = current_millis()
         for key, value in kv_dict.items():
-            self.redis.zadd(key, {"%s:%s" % (c_time, value): c_time})
+            redis_data = {"%s:%s" % (c_time, value): c_time}
+            self.redis.zadd(key, redis_data)
             self.remove_old_values(key, c_time)
