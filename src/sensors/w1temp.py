@@ -15,8 +15,8 @@ class W1Temp(AbstractSensor):
         try:
             with open(self.device_file, 'r') as fh:
                 return fh.readlines()
-        except:
-            logging.error('error reading raw data')
+        except Exception:
+            logging.exception('error reading raw data')
 
     def read_temp(self):
         lines = self.read_temp_raw()

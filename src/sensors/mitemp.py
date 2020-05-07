@@ -20,7 +20,7 @@ class MiTemp(AbstractSensor):
             try:
                 temp = self.poller.parameter_value(TEMP)
                 hum = self.poller.parameter_value(HUM)
-            except:
+            except Exception:
                 logging.exception('Failed to read temp')
         return {TEMP: temp,
                 HUM: hum}

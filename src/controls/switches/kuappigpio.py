@@ -18,19 +18,19 @@ class KuappiGPIO(AbstractSwitch):
         try:
             GPIO.output(self.pin, True)
             self._state = True
-        except:
-            logging.error('GPIO error when setting True')
+        except Exception:
+            logging.exception('GPIO error when setting True')
 
     def off(self):
         try:
             GPIO.output(self.pin, False)
             self._state = False
-        except:
-            logging.error('GPIO error when setting False')
+        except Exception:
+            logging.exception('GPIO error when setting False')
 
     def cleanup(self):
         GPIO.cleanup(self.pin)
 
     @property
     def state(self):
-        return GPIO.input(self.pin) and self._state is True
+        return GPIO.input(self.pin) and self._state

@@ -59,7 +59,7 @@ class Kuappi:
                 logging.info("stopping")
                 self.controller.cleanup()
                 break
-            except:
+            except Exception:
                 logging.exception("Unknown exception")
 
     def cleanup(self, *_):

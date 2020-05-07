@@ -9,9 +9,9 @@ class FridgeDecision(AbstractDecision):
 
     def get_decision(self, data, output_state=None):
         temp = data[TEMP]
-        if temp >= self.soft_hi_limit and output_state is False:
+        if temp >= self.soft_hi_limit and not output_state:
             return True
-        elif temp <= self.soft_low_limit and output_state is True:
+        elif temp <= self.soft_low_limit and output_state:
             return False
         elif temp > self.hard_hi_limit:
             return True

@@ -14,15 +14,15 @@ class Wemo(AbstractSwitch):
         try:
             self.wemo.on()
             self.state = True
-        except:
-            logging.error('wemo error (on)')
+        except Exception:
+            logging.exception('wemo error (on)')
 
     def off(self):
         try:
             self.wemo.off()
             self.state = False
-        except:
-            logging.error('wemo error (off)')
+        except Exception:
+            logging.exception('wemo error (off)')
 
     def cleanup(self):
         pass
