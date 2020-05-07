@@ -1,4 +1,6 @@
 mitemp-bt
+btlewrap
 pyserial
 pywemo
 redis
+paho-mqtt
