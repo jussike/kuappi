@@ -7,6 +7,8 @@ if 'Wemo' in CONFIG.get('controls'):
     from controls.switches.wemo import Wemo
 if 'KuappiGPIO' in CONFIG.get('controls'):
     from controls.switches.kuappigpio import KuappiGPIO
+if 'ValloxControl' in CONFIG.get('controls'):
+    from controls.valloxcontrol import ValloxControl
 
 
 class Controller(AbstractControl, AbstractSwitch):
