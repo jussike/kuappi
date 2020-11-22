@@ -10,7 +10,9 @@ class MqttSensor(AbstractSensor):
         self.client_id = CONFIG.get('mqtt_client')
         self.data = None
 
-        client = mqtt.Client('Kuappi')
+        client = mqtt.Client(
+            CONFIG.get('mqtt_client_name')
+        )
         client.on_connect = self.on_connect
         client.on_message = self.on_message
         client.connect("localhost", 1883, 60)

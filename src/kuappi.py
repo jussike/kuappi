@@ -13,6 +13,8 @@ if 'MqttSensor' == CONFIG.get('sensor'):
     from sensors.mqtt import MqttSensor
 if 'FridgeDecision' == CONFIG.get('decision'):
     from decisions.fridgedecision import FridgeDecision
+if 'FreezerDecision' == CONFIG.get('decision'):
+    from decisions.freezerdecision import FreezerDecision
 if 'ValloxDecision' == CONFIG.get('decision'):
     from decisions.valloxdecision import ValloxDecision
 if True == CONFIG.get('use_redis'):

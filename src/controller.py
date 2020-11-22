@@ -9,6 +9,8 @@ if 'KuappiGPIO' in CONFIG.get('controls'):
     from controls.switches.kuappigpio import KuappiGPIO
 if 'ValloxControl' in CONFIG.get('controls'):
     from controls.valloxcontrol import ValloxControl
+if 'AlarmControl' in CONFIG.get('controls'):
+    from controls.alarmcontrol import AlarmControl
 
 
 class Controller(AbstractControl, AbstractSwitch):

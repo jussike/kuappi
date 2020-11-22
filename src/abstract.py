@@ -29,3 +29,9 @@ class AbstractControl(metaclass=ABCMeta):
     @abstractmethod
     def control(self, param):
         pass
+
+    @property
+    @abstractmethod
+    def state(self):
+        pass
+
