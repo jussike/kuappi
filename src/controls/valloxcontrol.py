@@ -4,12 +4,13 @@ import time
 import threading
 
 from abstract import AbstractControl
-from valloxserial import ValloxSerial
+from valloxserial import vallox_serial
 
 
 class ValloxControl(AbstractControl):
     def __init__(self):
-        self.serial = ValloxSerial(self)
+        self.serial = vallox_serial
+        self.serial.control = self
         self._speed = None
 
     @property
