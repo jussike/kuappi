@@ -24,6 +24,7 @@ class ValloxDecision(AbstractDecision):
         if not raw:
             return False
         temp = get_vallox_temp(raw)
+        logging.info('vallox intake temp %d, sensor temp %d', temp, data[TEMP])
         return temp < data[TEMP]
 
     def get_decision(self, data, _=None):
