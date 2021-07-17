@@ -18,14 +18,17 @@ class ValloxDecision(AbstractDecision):
 
     def __init__(self):
         self.vallox = vallox_serial
+        self._is_cold = None
 
     def is_cold(self, data):
         raw = self.vallox.ask_vallox('intake_temp')
         if not raw:
-            return False
+            logging.error("vallox didn't answer intake_temp")
+            return self._is_cold
         temp = get_vallox_temp(raw)
-        logging.info('vallox intake temp %d, sensor temp %d', temp, data[TEMP])
-        return temp < data[TEMP]
+        logging.info('vallox intake temp %d, sensor temp %.1f', temp, data[TEMP])
+        self._is_cold = temp < (data[TEMP] - 1)
+        return self._is_cold
 
     def get_decision(self, data, _=None):
         if CONFIG.get('summer_mode'):
