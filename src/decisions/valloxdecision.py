@@ -15,24 +15,35 @@ class ValloxDecision(AbstractDecision):
     speed_max = 8
     speed_normal_min = 4
     speed_too_hot = 2
+    limit_inside = 25
 
     def __init__(self):
         self.vallox = vallox_serial
-        self._is_cold = None
+        self._summer_speed_control = None
 
-    def is_cold(self, data):
+    def summer_speed_control(self, data):
         raw = self.vallox.ask_vallox('intake_temp')
         if not raw:
             logging.error("vallox didn't answer intake_temp")
-            return self._is_cold
+            return self._summer_speed_control
         temp = get_vallox_temp(raw)
+        if data[TEMP] <= self.limit_inside:
+            # Use humidity based control
+            logging.info('Using humidity based control')
+            self._summer_speed_control = None
+            return self._summer_speed_control
+
+        # Force speed to high or low
         logging.info('vallox intake temp %d, sensor temp %.1f', temp, data[TEMP])
-        self._is_cold = temp < (data[TEMP] - 1)
-        return self._is_cold
+        self._summer_speed_control = temp < (data[TEMP] - 1)
+        return self._summer_speed_control
 
     def get_decision(self, data, _=None):
         if CONFIG.get('summer_mode'):
-            if self.is_cold(data):
+            summer_speed_control = self.summer_speed_control(data)
+            if summer_speed_control is None:
+                return self.humidity_decision(data)
+            elif summer_speed_control:
                 logging.info('Cold outside, maximizing speed: %d', self.speed_max)
                 return self.speed_max
             elif self.humidity_decision(data) == self.speed_normal_min:
