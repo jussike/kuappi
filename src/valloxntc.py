@@ -36,7 +36,7 @@ vallox_ntc_temp = {
 def get_vallox_temp(raw):
     try:
         value = vallox_ntc_temp[raw]
-    except IndexError:
+    except KeyError:
         if raw < 160:
             value = -100
         elif raw > 190:
