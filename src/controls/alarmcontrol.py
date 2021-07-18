@@ -10,20 +10,29 @@ class AlarmControl(AbstractControl):
         self.event = Event()
         self._state = False
 
+    def alarm_on(self):
+        if self.loop:
+            return
+        self.loop = Thread(
+            target=self.alarmloop,
+            daemon=True,
+        )
+        self.loop.start()
+
+    def alarm_off(self):
+        self.event.set()
+        if self.proc:
+            self.proc.terminate()
+            self.proc.wait()
+            self.proc = None
+        self.event.clear()
+        self.loop = None
+
     def control(self, decision):
         if decision:
-            self.loop = Thread(
-                target=self.alarmloop,
-                daemon=True,
-            )
-            self.loop.start()
+            self.alarm_on()
         else:
-            self.event.set()
-            if self.proc:
-                self.proc.terminate()
-                self.proc.wait()
-                self.proc = None
-            self.event.clear()
+            self.alarm_off()
         self._state = decision
 
     def alarmloop(self):
