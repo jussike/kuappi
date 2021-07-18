@@ -17,11 +17,18 @@ class AbstractSwitch(metaclass=ABCMeta):
     @abstractmethod
     def on(self):
         pass
+
     @abstractmethod
     def off(self):
         pass
+
     @abstractmethod
     def cleanup(self):
+        pass
+
+    @property
+    @abstractmethod
+    def state(self):
         pass
 
 
@@ -34,4 +41,3 @@ class AbstractControl(metaclass=ABCMeta):
     @abstractmethod
     def state(self):
         pass
-

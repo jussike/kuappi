@@ -26,3 +26,7 @@ class Wemo(AbstractSwitch):
 
     def cleanup(self):
         pass
+
+    @property
+    def state(self):
+        return self.state
