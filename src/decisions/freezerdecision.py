@@ -24,10 +24,10 @@ class FreezerDecision(AbstractDecision):
             logging.info('Very bad link quality, raising error counter')
             if self.errors >= self.error_limit:
                 logging.error('No link, starting alarm')
-                return 1
+                return True
 
         if temp > self.hard_hi_limit:
-            return 1
+            return True
         elif temp < self.hard_low_limit:
-            return 1
-        return 0
+            return True
+        return False

@@ -1,16 +1,15 @@
 from subprocess import Popen, DEVNULL
 from threading import Thread, Event
-from abstract import AbstractControl
+from abstract import AbstractSwitch
 
 
-class AlarmControl(AbstractControl):
+class AlarmControl(AbstractSwitch):
     def __init__(self):
         self.loop = None
         self.proc = None
         self.event = Event()
-        self._state = False
 
-    def alarm_on(self):
+    def on(self):
         if self.loop:
             return
         self.loop = Thread(
@@ -19,7 +18,7 @@ class AlarmControl(AbstractControl):
         )
         self.loop.start()
 
-    def alarm_off(self):
+    def off(self):
         self.event.set()
         if self.proc:
             self.proc.terminate()
@@ -27,13 +26,6 @@ class AlarmControl(AbstractControl):
             self.proc = None
         self.event.clear()
         self.loop = None
-
-    def control(self, decision):
-        if decision:
-            self.alarm_on()
-        else:
-            self.alarm_off()
-        self._state = decision
 
     def alarmloop(self):
         while not self.event.is_set():
@@ -46,4 +38,7 @@ class AlarmControl(AbstractControl):
 
     @property
     def state(self):
-        return self._state
+        return self.loop is not None
+
+    def cleanup(self):
+        self.off()
