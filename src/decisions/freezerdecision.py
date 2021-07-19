@@ -1,33 +1,31 @@
 import logging
 
 from abstract import AbstractDecision
-from common import TEMP, QUALITY
+from common import TEMP
 
 
 class FreezerDecision(AbstractDecision):
     hard_hi_limit = -13
     hard_low_limit = -24
-    error_limit = 50
+    cached_limit = 50
 
     def __init__(self):
         logging.info('Using FreezerDecision')
-        self.errors = 0
+        self.cached_data_count = 0
+        self.old_data = None
 
     def get_decision(self, data, output_state=None):
-        temp = data[TEMP]
-        quality = data[QUALITY]
-
-        if quality:
-            self.errors = 0
-        else:
-            self.errors += 1
-            logging.info('Very bad link quality, raising error counter')
-            if self.errors >= self.error_limit:
-                logging.error('No link, starting alarm')
+        if data == self.old_data:
+            self.cached_data_count += 1
+            if self.cached_data_count >= self.cached_limit:
+                logging.error('Data may be too old, raising alarm')
                 return True
+            else:
+                logging.info('Data has been same than previous one %d times. There may be problem with the data source', self.cached_data_count)
+        else:
+            self.cached_data_count = 0
+            self.old_data = data
 
-        if temp > self.hard_hi_limit:
-            return True
-        elif temp < self.hard_low_limit:
-            return True
-        return False
+        if self.hard_low_limit <= data[TEMP] <= self.hard_hi_limit:
+            return False
+        return True
