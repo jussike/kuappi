@@ -27,3 +27,6 @@ class MiTemp(AbstractSensor):
 
     def get_data(self):
         return self._read_data()
+
+    def cleanup(self):
+        pass

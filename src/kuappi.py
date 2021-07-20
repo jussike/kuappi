@@ -60,12 +60,14 @@ class Kuappi:
             except KeyboardInterrupt:
                 logging.info("stopping")
                 self.controller.cleanup()
+                self.sensor.cleanup()
                 break
             except Exception:
                 logging.exception("Unknown exception")
 
     def cleanup(self, *_):
         self.controller.cleanup()
+        self.sensor.cleanup()
         self.event.set()
 
 Kuappi().loop()

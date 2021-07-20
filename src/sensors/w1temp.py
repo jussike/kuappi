@@ -32,3 +32,6 @@ class W1Temp(AbstractSensor):
 
     def get_data(self):
         return {TEMP: self.read_temp()}
+
+    def cleanup(self):
+        pass

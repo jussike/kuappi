@@ -6,6 +6,9 @@ class AbstractSensor(metaclass=ABCMeta):
     def get_data(self):
         pass
 
+    @abstractmethod
+    def cleanup(self):
+        pass
 
 class AbstractDecision(metaclass=ABCMeta):
     @abstractmethod
