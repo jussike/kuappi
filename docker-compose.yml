@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  kuappi:
+    container_name: kuappi
+    image: python-kuappi
+    network_mode: host
+    depends_on:
+      - zigbee2mqtt
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    image: koenkk/zigbee2mqtt
+    volumes:
+      - ./data:/app/data
+      - /run/udev:/run/udev:ro
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    restart: always
+    network_mode: host
+    privileged: true
+    environment:
+      - TZ=Europe/Helsinki
+    depends_on:
+      - mosquitto
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto
+    network_mode: host
