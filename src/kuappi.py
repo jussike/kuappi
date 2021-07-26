@@ -53,7 +53,7 @@ class Kuappi:
         while not self.event.is_set():
             try:
                 data = self.sensor.get_data()
-                if not data:
+                if data is None:
                     self.event.wait(polling_freq)
                     continue
                 decision = self.decision.get_decision(data, self.controller.state)
