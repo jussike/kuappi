@@ -8,6 +8,7 @@ class FreezerDecision(AbstractDecision):
     hard_hi_limit = -13
     hard_low_limit = -24
     cached_limit = 50
+    warn_limit = 10
 
     def __init__(self):
         logging.info('Using FreezerDecision')
@@ -20,7 +21,7 @@ class FreezerDecision(AbstractDecision):
             if self.cached_data_count >= self.cached_limit:
                 logging.error('Data may be too old, raising alarm')
                 return True
-            else:
+            elif self.cached_data_count >= self.warn_limit:
                 logging.info('Data has been same than previous one %d times. There may be problem with the data source', self.cached_data_count)
         else:
             self.cached_data_count = 0
