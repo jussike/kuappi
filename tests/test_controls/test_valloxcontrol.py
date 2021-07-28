@@ -1,6 +1,8 @@
 from unittest import TestCase
 from unittest.mock import patch
-from controls.valloxcontrol import ValloxControl, ValloxSerial
+with patch('serial.Serial'):
+    from controls.valloxcontrol import ValloxControl
+from valloxserial import vallox_serial
 
 
 class TestValloxControl(TestCase):
@@ -9,13 +11,13 @@ class TestValloxControl(TestCase):
     def setUp(self, _):
         self.vc = ValloxControl()
 
-    @patch.object(ValloxSerial, 'set_speed')
+    @patch.object(vallox_serial, 'set_speed')
     def test_control_same_speed(self, set_speed):
         self.vc.state = 1
         self.vc.control(1)
         self.assertFalse(set_speed.called)
 
-    @patch.object(ValloxSerial, 'set_speed')
+    @patch.object(vallox_serial, 'set_speed')
     def test_control_change_speed(self, set_speed):
         self.vc.state = 1
         self.vc.control(2)
