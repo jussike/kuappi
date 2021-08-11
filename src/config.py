@@ -13,6 +13,7 @@ CONFIG = {
     'mqtt_client': 'zigbee2mqtt/0x00158d00023278d1',
     'mqtt_client_name': 'Kuappi',
     'decision': 'FridgeDecision',
+    #'decision': 'FridgeAlarmDecision',
     #'decision': 'ValloxDecision',
     #'decision': 'FreezerDecision',
     'summer_mode': False,

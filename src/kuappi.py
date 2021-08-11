@@ -15,6 +15,8 @@ if 'NetSensor' == CONFIG.get('sensor'):
     from sensors.netsensor import NetSensor
 if 'FridgeDecision' == CONFIG.get('decision'):
     from decisions.fridgedecision import FridgeDecision
+if 'FridgeAlarmDecision' == CONFIG.get('decision'):
+    from decisions.fridgealarmdecision import FridgeAlarmDecision
 if 'FreezerDecision' == CONFIG.get('decision'):
     from decisions.freezerdecision import FreezerDecision
 if 'ValloxDecision' == CONFIG.get('decision'):
