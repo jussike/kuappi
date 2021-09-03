@@ -35,6 +35,8 @@ class NetSensor(AbstractSensor):
         while not self.event.is_set():
             data = self.socket.recv(self.BUFSIZE)
             if data:
+                if data != self.data:
+                    logging.info('NetSensor: New data %s', data)
                 self.data = data
 
     def cleanup(self):
