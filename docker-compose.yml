@@ -5,6 +5,7 @@ services:
     container_name: kuappi
     image: python-kuappi
     network_mode: host
+    restart: always
     depends_on:
       - zigbee2mqtt
   zigbee2mqtt:
@@ -26,3 +27,4 @@ services:
     container_name: mosquitto
     image: eclipse-mosquitto
     network_mode: host
+    restart: always
