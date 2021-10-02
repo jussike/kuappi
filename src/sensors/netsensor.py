@@ -25,7 +25,7 @@ class NetSensor(AbstractSensor):
     def get_data(self):
         if not self.data:
             logging.info('NetSensor: no data')
-            return None
+            return True
         if self.data[0]:
             logging.info('NetSensor: alarm: data %s', self.data)
             return True
