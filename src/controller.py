@@ -7,8 +7,8 @@ if 'Wemo' in CONFIG.get('controls'):
     from controls.switches.wemo import Wemo
 if 'KuappiGPIO' in CONFIG.get('controls'):
     from controls.switches.kuappigpio import KuappiGPIO
-if 'NetControl' in CONFIG.get('controls'):
-    from controls.switches.netcontrol import NetControl
+if 'NetSwitch' in CONFIG.get('controls'):
+    from controls.switches.netswitch import NetSwitch
 if 'ValloxControl' in CONFIG.get('controls'):
     from controls.valloxcontrol import ValloxControl
 if 'AlarmControl' in CONFIG.get('controls'):

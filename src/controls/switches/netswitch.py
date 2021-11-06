@@ -3,7 +3,7 @@ import socket
 from abstract import AbstractSwitch
 from config import CONFIG
 
-class NetControl(AbstractSwitch):
+class NetSwitch(AbstractSwitch):
     def __init__(self):
         self.msg_on = bytes((1,))
         self.msg_off = bytes((0,))

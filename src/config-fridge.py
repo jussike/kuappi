@@ -4,7 +4,7 @@ CONFIG = {
         'KuappiGPIO',
         #'ValloxControl',
         #'AlarmControl',
-        #'NetControl',
+        #'NetSwitch',
     ),
     #'sensor': 'W1Temp',
     #'sensor': 'MiTemp',
