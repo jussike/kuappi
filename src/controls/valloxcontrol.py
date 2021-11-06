@@ -24,3 +24,6 @@ class ValloxControl(AbstractControl):
     def control(self, speed):
         if speed != self._speed:
             self.serial.set_speed(speed)
+
+    def cleanup(self):
+        pass

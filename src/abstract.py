@@ -44,3 +44,7 @@ class AbstractControl(metaclass=ABCMeta):
     @abstractmethod
     def state(self):
         pass
+
+    @abstractmethod
+    def cleanup(self):
+        pass

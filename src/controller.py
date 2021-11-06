@@ -40,9 +40,7 @@ class Controller(AbstractControl, AbstractSwitch):
 
     def cleanup(self):
         for output in self._controls:
-            if isinstance(output, AbstractSwitch):
-                output.cleanup()
-            # Other types of controls don't need this cleanup
+            output.cleanup()
 
     @property
     def state(self):
