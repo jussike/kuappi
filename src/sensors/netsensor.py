@@ -1,3 +1,4 @@
+import json
 import logging
 import socket
 from threading import Thread, Event
@@ -32,9 +33,7 @@ class NetSensor(AbstractSensor):
         while not self.event.is_set():
             data = self.socket.recv(self.BUFSIZE)
             if data:
-                if data != self.data:
-                    logging.info('NetSensor: new data %s', data)
-                self.data = data
+                self.data = json.loads(data)
 
     def cleanup(self):
         self.event.set()
