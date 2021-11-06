@@ -51,15 +51,15 @@ class Controller(AbstractControl, AbstractSwitch):
     def control(self, param):
         if param is None:
             return
-        if isinstance(param, bool):
+        elif isinstance(param, bool):
             if param:
                 self.on()
             else:
                 self.off()
             return
-        if isinstance(param, int):
-          for control in self._controls:
-              if isinstance(control, AbstractControl):
-                  control.control(param)
-              else:
-                  logging.error('%s is not instance of AbstractControl', control)
+        else:
+            for control in self._controls:
+                if isinstance(control, AbstractControl):
+                    control.control(param)
+                else:
+                    logging.error('%s is not instance of AbstractControl', control)

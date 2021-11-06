@@ -1,3 +1,4 @@
+import json
 import logging
 import socket
 
@@ -13,7 +14,7 @@ class NetControl(AbstractControl):
         self._state = None
 
     def control(self, value):
-        self.socket.sendto(value, (self.host, self.port))
+        self.socket.sendto(json.dumps(value).encode(), (self.host, self.port))
         self._state = value
 
     @property
