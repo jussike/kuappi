@@ -7,4 +7,4 @@ class PassthruDecision(AbstractDecision):
         if data is None:
             logging.info('Passthru: No data')
             return None
-        return True if data else False
+        return data

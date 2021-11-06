@@ -6,7 +6,6 @@ from abstract import AbstractSensor
 from config import CONFIG
 
 class NetSensor(AbstractSensor):
-    BUFSIZE = 4
 
     def __init__(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -25,15 +24,11 @@ class NetSensor(AbstractSensor):
     def get_data(self):
         if not self.data:
             logging.info('NetSensor: no data')
-            return True
-        if self.data[0]:
-            logging.info('NetSensor: alarm: data %s', self.data)
-            return True
-        return False
+        return self.data
 
     def listener(self):
         while not self.event.is_set():
-            data = self.socket.recv(self.BUFSIZE)
+            data = self.socket.recv()
             if data:
                 if data != self.data:
                     logging.info('NetSensor: New data %s', data)
