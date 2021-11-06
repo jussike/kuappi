@@ -9,6 +9,8 @@ if 'KuappiGPIO' in CONFIG.get('controls'):
     from controls.switches.kuappigpio import KuappiGPIO
 if 'NetSwitch' in CONFIG.get('controls'):
     from controls.switches.netswitch import NetSwitch
+if 'NetControl' in CONFIG.get('controls'):
+    from controls.netcontrol import NetControl
 if 'ValloxControl' in CONFIG.get('controls'):
     from controls.valloxcontrol import ValloxControl
 if 'AlarmControl' in CONFIG.get('controls'):
