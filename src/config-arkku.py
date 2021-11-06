@@ -15,7 +15,7 @@ CONFIG = {
     'mqtt_client_name': 'Arkku',
     #'decision': 'FridgeDecision',
     #'decision': 'ValloxDecision',
-    'decision': 'FreezerDecision',
+    'decision': 'PassthruDecision',
     'summer_mode': False,
     'use_redis': False,
     'polling_freq': 60,
