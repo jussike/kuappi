@@ -16,6 +16,9 @@ class FreezerDecision(AbstractDecision):
         self.old_data = None
 
     def get_decision(self, data, output_state=None):
+        if data == False:
+            logging.error('False data received, raising alarm')
+            return True
         if data == self.old_data:
             self.cached_data_count += 1
             if self.cached_data_count >= self.cached_limit:
