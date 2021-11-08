@@ -10,8 +10,8 @@ from valloxntc import get_vallox_temp
 class ValloxDecision(AbstractDecision):
     hum_8_limit = 92
     hum_7_limit = 80
-    hum_6_limit = 60
-    hum_5_limit = 45
+    hum_6_limit = 65
+    hum_5_limit = 60
     speed_max = 8
     speed_normal_min = 4
     speed_too_hot = 2
