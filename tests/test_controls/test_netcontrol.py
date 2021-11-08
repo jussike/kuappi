@@ -28,7 +28,7 @@ class TestNetControl(TestCase):
 
     def test_control(self):
         test_data = \
-            b"{'battery': 25, 'voltage': 2785, 'temperature': 20.68, 'humidity': 75.62, 'pressure': 1987.2, 'linkquality': 139}"
+            "{'battery': 25, 'voltage': 2785, 'temperature': 20.68, 'humidity': 75.62, 'pressure': 1987.2, 'linkquality': 139}"
         self.control.control(test_data)
 
         data = None
