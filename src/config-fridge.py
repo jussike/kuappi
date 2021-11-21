@@ -25,4 +25,8 @@ CONFIG = {
     'netctl_host': '192.168.1.99',
     'netctl_udp_port': 9999,
     'log_file': '/tmp/kuappi.log',
+    'zmq_recv_port': 8988,
+    'zmq_send_port': 8989,
+    'zmq_host': '192.168.1.9',
+    'node_name': 'jiakuappi',
 }
