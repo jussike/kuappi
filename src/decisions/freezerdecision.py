@@ -48,6 +48,6 @@ class FreezerDecision(AbstractDecision):
         self.zmq_pub.send_alarm('Alarm! Temperature {} is outside of the limits ({} - {})!'.format(data[TEMP], self.hard_low_limit, self.hard_hi_limit))
         return True
 
-    def snooze(self, **kwargs):
+    def remote_snooze(self, **kwargs):
         self.control()
         self.zmq_pub.send('Snoozed for {} secs'.format(self.control_time))

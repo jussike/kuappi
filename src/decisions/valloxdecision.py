@@ -18,6 +18,7 @@ class ValloxDecision(AbstractDecision):
     limit_inside = 25
 
     def __init__(self):
+        super().__init__(zmq=True)
         self.vallox = vallox_serial
         self._summer_speed_control = None
 
@@ -39,6 +40,13 @@ class ValloxDecision(AbstractDecision):
         return self._summer_speed_control
 
     def get_decision(self, data, _=None):
+        if self.remote_controlled:
+            logging.info('Remote controlled to %d', self.remote_control_decision)
+            self.zmq_pub.send_alarm('Remote controlled to {} for {} secs'.format(self.remote_control_decision, self.control_time))
+            return self.remote_control_decision
+        else:
+            self.zmq_pub.normal()
+
         if CONFIG.get('summer_mode'):
             summer_speed_control = self.summer_speed_control(data)
             if summer_speed_control is None:
@@ -68,3 +76,15 @@ class ValloxDecision(AbstractDecision):
         else:
             logging.info('Humidity %s, setting %d', hum, self.speed_normal_min)
             return self.speed_normal_min
+
+    def remote_speed(self, **kwargs):
+        cmd_speed = kwargs['speed'] if kwargs and 'speed' in kwargs else None
+        cmd_time = kwargs['time'] if kwargs and 'time' in kwargs else None
+        if cmd_speed and cmd_speed > 0:
+            logging.info('Controlling with cmd speed %d and time %d', cmd_speed, cmd_time)
+            self.control(decision=cmd_speed, control_time=cmd_time)
+        else:
+            speed = self.vallox.ask_vallox('speed')
+            speed = self.vallox.vallox_speed_value_to_number(speed)
+            logging.info('Vallox told that speed is {}'.format(speed))
+            self.zmq_pub.send('Vallox told that speed is {}'.format(speed))

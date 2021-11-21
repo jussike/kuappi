@@ -32,6 +32,7 @@ class ValloxSerial:
     timeout = 0.05
 
     def __init__(self):
+        logging.info('Initializing vallox serial')
         self.ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=0.02)
         self.checksum_byte = None
         self.lock = threading.RLock()
@@ -126,5 +127,9 @@ class ValloxSerial:
         if len(data) == 6:
             return data[4]
         return None
+
+    def vallox_speed_value_to_number(self, value):
+        return bin(value).count("1")
+
 
 vallox_serial = ValloxSerial()

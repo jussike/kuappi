@@ -49,7 +49,7 @@ class AbstractDecision(metaclass=ABCMeta):
         return False
 
     def on_message(self, msg):
-        cmd = msg['cmd']
+        cmd = 'remote_' + msg['cmd']
         kwargs = msg['params'] if 'params' in msg else {}
 
         if cmd in self.__class__.__dict__.keys():
