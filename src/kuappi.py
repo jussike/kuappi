@@ -35,6 +35,7 @@ def setup_logging(log_file=None):
     log_format = '%(asctime)s - %(levelname)s - %(message)s'
     logging.basicConfig(filename=log_file,
                         format=log_format,
+                        force=True,
                         level=logging.DEBUG)
     logging.info('Logging is set')
 
