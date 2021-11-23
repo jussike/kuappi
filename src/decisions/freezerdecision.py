@@ -48,7 +48,7 @@ class FreezerDecision(AbstractDecision):
             self.zmq_pub.normal()
             return False
 
-        self.zmq_pub.send_alarm('Alarm: Temperature {} is outside of the limits ({} - {}). Data age is {:.0f} minutes.'.format(data[TEMP], self.low_limit, self.hi_limit, (time.monotonic() - self.data_age) / 60))
+        self.zmq_pub.send_alarm('Alarm: Temperature {} is outside of the limits ({} - {}). Data age is {:.0f} minutes.'.format(data[TEMP], self.hard_low_limit, self.hard_hi_limit, (time.monotonic() - self.data_age) / 60))
         return True
 
     def remote_snooze(self, **kwargs):
