@@ -80,7 +80,7 @@ class ValloxDecision(AbstractDecision):
     def remote_speed(self, **kwargs):
         cmd_speed = kwargs['speed'] if kwargs and 'speed' in kwargs else None
         cmd_time = kwargs['time'] if kwargs and 'time' in kwargs else None
-        if cmd_speed and cmd_speed > 0:
+        if cmd_speed is not None:
             logging.info('Controlling with cmd speed %d and time %d', cmd_speed, cmd_time)
             self.control(decision=cmd_speed, control_time=cmd_time)
         else:

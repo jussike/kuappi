@@ -35,7 +35,7 @@ class AbstractDecision(metaclass=ABCMeta):
             self.zmq_pub = KuappiZMQSender()
 
     def control(self, decision=None, control_time=None):
-        self.remote_control_decision = decision if decision else False
+        self.remote_control_decision = decision if decision is not None else False
         self.control_time = control_time if control_time else self.DEFAULT_CONTROL_TIME
         self._remote_controlled = time.monotonic()
 

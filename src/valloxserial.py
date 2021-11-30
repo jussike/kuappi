@@ -14,6 +14,7 @@ class ValloxSerial:
     commands = {
         'speed': b'\x29',
         'intake_temp': b'\x5b',
+        'select': b'\xa3',
     }
     # There are wrong temp variables in spec:
     # Proper variables: 5a 5b 5c 58, Remote control shows 5b
@@ -46,12 +47,16 @@ class ValloxSerial:
         request_data += self.get_checksum(request_data)
         return request_data
 
-    def get_control_data(self, destination, command, value):
+    def get_control_data(self, destination, command, value, value_pass=None):
         control_data = self.system \
                        + self.sender \
                        + self.destinations[destination] \
-                       + self.commands[command] \
-                       + self.values[command][value]
+                       + self.commands[command]
+        if value_pass:
+            control_data += bytes((value,))
+        else:
+            control_data += self.values[command][value]
+
         control_data += self.get_checksum(control_data)
         return control_data
 
@@ -67,33 +72,50 @@ class ValloxSerial:
         self.ser.reset_output_buffer()
 
     def set_speed(self, speed):
-        control_data = self.get_control_data('host', 'speed', speed)
+        select = self.ask_vallox('select')
+        if not select & 1:
+            self.power_on()
+        self.set_attribute('speed', speed)
+
+    def power_off(self):
+        value = self.ask_vallox('select')
+        value = value & ~1
+        self.set_attribute('select', value, value_pass=True)
+
+    def power_on(self):
+        value = self.ask_vallox('select')
+        value = value | 1
+        self.set_attribute('select', value, value_pass=True)
+
+    def set_attribute(self, attribute, value, value_pass=None):
+        control_data = self.get_control_data('host', attribute, value, value_pass)
         with self.lock:
             self.reset()
             self.ser.write(control_data)
-            self.listen_ack(control_data[-1], speed)
+            self.listen_ack(control_data[-1], attribute, value)
 
-    def listen_ack(self, checksum, state):
-        listen_thread = threading.Thread(target=self.run, args=(checksum, state))
+    def listen_ack(self, checksum, attribute, state):
+        listen_thread = threading.Thread(target=self.run, args=(checksum, attribute, state))
         listen_thread.start()
 
-    def inform_remotes(self, speed):
-        control_data = self.get_control_data('remote_broadcast', 'speed', speed)
+    def inform_remotes(self, attribute, value):
+        control_data = self.get_control_data('remote_broadcast', attribute, value, value_pass=(attribute=='select'))
         self.ser.write(control_data)
 
-    def run(self, checksum, state):
+    def run(self, checksum, attribute, state):
         if not self.wait_for_ack(checksum):
             logging.error('Missing ack')
             return
         self.control.state = state
-        self.inform_remotes(state)
+        self.inform_remotes(attribute, state)
 
     def wait_for_ack(self, checksum):
         started = time.monotonic()
         while time.monotonic() < started + self.timeout:
-            if self.wait_for_response(1)[0] == checksum:
+            response = self.wait_for_response(1)[0]
+            if response == checksum:
                 return True
-            logging.error('Discarding invalid ack')
+            logging.error('Discarding invalid ack, received %d, expected %d', response, checksum)
         return False
 
     def wait_for_response(self, length=None):
