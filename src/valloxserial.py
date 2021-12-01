@@ -1,3 +1,4 @@
+from collections import deque
 import logging
 import serial
 import time
@@ -37,17 +38,69 @@ class ValloxSerial:
         self.ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=0.02)
         self.checksum_byte = None
         self.lock = threading.RLock()
+        self.deque = deque()
+        self.event = threading.Event()
+        self.loop = threading.Thread(
+            target=self._send_loop,
+            daemon=True)
+        self.loop.start()
 
-    def get_request_data(self, destination, command):
+    def set_speed(self, speed):
+        self.deque.append((self._power_on,))
+        self.deque.append((self._set_attribute, 'speed', speed))
+
+    def power_off(self):
+        self.deque.append((self._power_off,))
+
+    def ask_vallox(self, attribute):
+        req_data = self._get_request_data('host', attribute)
+        with self.lock:
+            self._reset()
+            self.ser.write(req_data)
+            data = self._wait_for_response()
+        if len(data) == 6:
+            return data[4]
+        return None
+
+    def _power_off(self, item):
+        logging.debug('Poweroff callback')
+        value = self.ask_vallox('select')
+        poweroff_value = value & ~1
+        if poweroff_value != value:
+            self._set_attribute((self._set_attribute, 'select', poweroff_value), value_pass=True)
+
+    def _power_on(self, item):
+        logging.debug('Poweron callback')
+        value = self.ask_vallox('select')
+        poweron_value = value | 1
+        if poweron_value != value:
+            self._set_attribute((self._set_attribute, 'select', poweron_value), value_pass=True)
+
+    def _send_loop(self):
+        while not self.event.is_set():
+            item = self._get_item()
+            if not item:
+                time.sleep(1)
+                continue
+            callback = item[0]
+            callback(item)
+
+    def _get_item(self):
+        try:
+            return self.deque.popleft()
+        except IndexError:
+            return None
+
+    def _get_request_data(self, destination, command):
         request_data = self.system \
                        + self.sender \
                        + self.destinations[destination] \
                        + bytes((0,)) \
                        + self.commands[command]
-        request_data += self.get_checksum(request_data)
+        request_data += self._get_checksum(request_data)
         return request_data
 
-    def get_control_data(self, destination, command, value, value_pass=None):
+    def _get_control_data(self, destination, command, value, value_pass=None):
         control_data = self.system \
                        + self.sender \
                        + self.destinations[destination] \
@@ -57,68 +110,49 @@ class ValloxSerial:
         else:
             control_data += self.values[command][value]
 
-        control_data += self.get_checksum(control_data)
+        control_data += self._get_checksum(control_data)
         return control_data
 
-    def get_checksum(self, serial_data):
+    def _get_checksum(self, serial_data):
         checksum = 0
         for byte in serial_data:
             checksum += byte
         checksum = checksum & 0xff
         return bytes((checksum,))
 
-    def reset(self):
+    def _reset(self):
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
 
-    def set_speed(self, speed):
-        select = self.ask_vallox('select')
-        if not select & 1:
-            self.power_on()
-        self.set_attribute('speed', speed)
-
-    def power_off(self):
-        value = self.ask_vallox('select')
-        value = value & ~1
-        self.set_attribute('select', value, value_pass=True)
-
-    def power_on(self):
-        value = self.ask_vallox('select')
-        value = value | 1
-        self.set_attribute('select', value, value_pass=True)
-
-    def set_attribute(self, attribute, value, value_pass=None):
-        control_data = self.get_control_data('host', attribute, value, value_pass)
+    def _set_attribute(self, item, value_pass=None):
+        _, attribute, value = item
+        logging.debug('Set attribute callback %s %s', attribute, value)
+        control_data = self._get_control_data('host', attribute, value, value_pass)
         with self.lock:
-            self.reset()
+            self._reset()
             self.ser.write(control_data)
-            self.listen_ack(control_data[-1], attribute, value)
+            checksum = control_data[-1]
+            if not self._wait_for_ack(checksum):
+                logging.error('Missing ack')
+                self.deque.insert(0, item)
+                return
+            self.control.state = value
+            self._inform_remotes(attribute, value)
 
-    def listen_ack(self, checksum, attribute, state):
-        listen_thread = threading.Thread(target=self.run, args=(checksum, attribute, state))
-        listen_thread.start()
-
-    def inform_remotes(self, attribute, value):
-        control_data = self.get_control_data('remote_broadcast', attribute, value, value_pass=(attribute=='select'))
+    def _inform_remotes(self, attribute, value):
+        control_data = self._get_control_data('remote_broadcast', attribute, value, value_pass=(attribute=='select'))
         self.ser.write(control_data)
 
-    def run(self, checksum, attribute, state):
-        if not self.wait_for_ack(checksum):
-            logging.error('Missing ack')
-            return
-        self.control.state = state
-        self.inform_remotes(attribute, state)
-
-    def wait_for_ack(self, checksum):
+    def _wait_for_ack(self, checksum):
         started = time.monotonic()
         while time.monotonic() < started + self.timeout:
-            response = self.wait_for_response(1)[0]
+            response = self._wait_for_response(1)[0]
             if response == checksum:
                 return True
             logging.error('Discarding invalid ack, received %d, expected %d', response, checksum)
         return False
 
-    def wait_for_response(self, length=None):
+    def _wait_for_response(self, length=None):
         with self.lock:
             data = b''
             started = time.monotonic()
@@ -134,21 +168,11 @@ class ValloxSerial:
                     logging.error('Flushing data %s %d', data, len(data))
                     data = b''
                     continue
-                checksum = self.get_checksum(data[0:-1])[0]
+                checksum = self._get_checksum(data[0:-1])[0]
                 if checksum == data[-1]:
                     return data
         logging.error('timeout')
         return data
-
-    def ask_vallox(self, attribute):
-        req_data = self.get_request_data('host', attribute)
-        with self.lock:
-            self.reset()
-            self.ser.write(req_data)
-            data = self.wait_for_response()
-        if len(data) == 6:
-            return data[4]
-        return None
 
     def vallox_speed_value_to_number(self, value):
         return bin(value).count("1")
