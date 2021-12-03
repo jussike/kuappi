@@ -36,7 +36,7 @@ def setup_logging(log_file=None):
     logging.basicConfig(filename=log_file,
                         format=log_format,
                         force=True,
-                        level=logging.DEBUG)
+                        level=logging.INFO)
     logging.info('Logging is set')
 
 
@@ -62,7 +62,7 @@ class Kuappi:
                 decision = self.decision.get_decision(data, self.controller.state)
                 self.controller.control(decision)
                 if isinstance(data, dict) and TEMP in data.keys():
-                    logging.debug('%s %s' % (data, self.controller.state))
+                    logging.info('%s %s' % (data, self.controller.state))
                     self.redis.add_multi((data[TEMP], 1 if self.controller.state else 0))
                 self.event.wait(polling_freq)
             except KeyboardInterrupt:

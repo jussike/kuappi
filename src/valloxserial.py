@@ -63,14 +63,14 @@ class ValloxSerial:
         return None
 
     def _power_off(self, item):
-        logging.debug('Poweroff callback')
+        logging.info('Poweroff callback')
         value = self.ask_vallox('select')
         poweroff_value = value & ~1
         if poweroff_value != value:
             self._set_attribute((self._set_attribute, 'select', poweroff_value), value_pass=True)
 
     def _power_on(self, item):
-        logging.debug('Poweron callback')
+        logging.info('Poweron callback')
         value = self.ask_vallox('select')
         poweron_value = value | 1
         if poweron_value != value:
@@ -126,7 +126,7 @@ class ValloxSerial:
 
     def _set_attribute(self, item, value_pass=None):
         _, attribute, value = item
-        logging.debug('Set attribute callback %s %s', attribute, value)
+        logging.info('Set attribute callback %s %s', attribute, value)
         control_data = self._get_control_data('host', attribute, value, value_pass)
         with self.lock:
             self._reset()

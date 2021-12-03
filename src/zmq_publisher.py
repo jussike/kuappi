@@ -45,7 +45,7 @@ class KuappiZMQSender:
         while not self.event.is_set():
             item = self.get_item()
             if item:
-                logging.debug('sending %s', item)
+                logging.info('sending %s', item)
                 self.socket.send_string(item)
 
     def get_item(self):
