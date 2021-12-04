@@ -85,6 +85,9 @@ class ValloxDecision(AbstractDecision):
             self.control(decision=cmd_speed, control_time=cmd_time)
         else:
             speed = self.vallox.ask_vallox('speed')
+            if speed is None:
+                self.zmq_pub.send("Speed: Vallox didn't response any valid value")
+                return
             speed = self.vallox.vallox_speed_value_to_number(speed)
             logging.info('Vallox told that speed is {}'.format(speed))
             self.zmq_pub.send('Vallox told that speed is {}'.format(speed))

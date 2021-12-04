@@ -32,6 +32,7 @@ class ValloxSerial:
         },
     }
     timeout = 0.05
+    packet_len = 6
 
     def __init__(self):
         logging.info('Initializing vallox serial')
@@ -57,14 +58,14 @@ class ValloxSerial:
         with self.lock:
             self._reset()
             self.ser.write(req_data)
-            data = self._wait_for_response()
-        if len(data) == 6:
-            return data[4]
-        return None
+            return self._wait_for_response(req_data=req_data)
 
     def _power_off(self, item):
         logging.info('Poweroff callback')
         value = self.ask_vallox('select')
+        if value is None:
+            logging.error("poweroff: Vallox didn't return a valid response")
+            return
         poweroff_value = value & ~1
         if poweroff_value != value:
             self._set_attribute((self._set_attribute, 'select', poweroff_value), value_pass=True)
@@ -72,6 +73,9 @@ class ValloxSerial:
     def _power_on(self, item):
         logging.info('Poweron callback')
         value = self.ask_vallox('select')
+        if value is None:
+            logging.error("poweron: Vallox didn't return a valid response")
+            return
         poweron_value = value | 1
         if poweron_value != value:
             self._set_attribute((self._set_attribute, 'select', poweron_value), value_pass=True)
@@ -83,7 +87,6 @@ class ValloxSerial:
                 if not item:
                     time.sleep(1)
                     continue
-                logging.info('Calling callback')
                 callback = item[0]
                 callback(item)
             except Exception:
@@ -130,7 +133,7 @@ class ValloxSerial:
 
     def _set_attribute(self, item, value_pass=None):
         _, attribute, value = item
-        logging.info('Set attribute callback %s %s', attribute, value)
+        logging.info("Set attribute callback '%s' %s", attribute, value)
         control_data = self._get_control_data('host', attribute, value, value_pass)
         with self.lock:
             self._reset()
@@ -145,18 +148,38 @@ class ValloxSerial:
 
     def _inform_remotes(self, attribute, value):
         control_data = self._get_control_data('remote_broadcast', attribute, value, value_pass=(attribute=='select'))
-        self.ser.write(control_data)
+        # This is an unacknowledged, so send it several times for making sure
+        for _ in range(3):
+            self.ser.write(control_data)
 
     def _wait_for_ack(self, checksum):
         started = time.monotonic()
         while time.monotonic() < started + self.timeout:
-            response = self._wait_for_response(1)[0]
+            response = self._wait_for_response(ack=True)
             if response == checksum:
                 return True
             logging.error('Discarding invalid ack, received %d, expected %d', response, checksum)
         return False
 
-    def _wait_for_response(self, length=None):
+    def _validate_response(self, req_data, recv_data):
+        validate_data = req_data[0:1]
+        validate_data += req_data[2:3]
+        validate_data += req_data[1:2]
+        validate_data += req_data[4:5]
+        while len(recv_data) >= self.packet_len:
+            start_pos = recv_data.find(self.system[0])
+            if start_pos == -1 or len(recv_data[start_pos:]) < self.packet_len:
+                logging.error('start_pos %d length %d, data %s', start_pos, len(recv_data), recv_data)
+                return False
+
+            recv_data = recv_data[start_pos:]
+            checksum = self._get_checksum(recv_data[0:5])
+            if validate_data == recv_data[0:4] and checksum[0] == recv_data[5]:
+                return recv_data[4]
+            recv_data = recv_data[1:]
+        return False
+
+    def _wait_for_response(self, req_data=None, ack=None):
         with self.lock:
             data = b''
             started = time.monotonic()
@@ -164,19 +187,19 @@ class ValloxSerial:
                 while self.ser.in_waiting:
                     data += self.ser.read()
                 if len(data) == 0:
+                    time.sleep(0.01)
                     continue
-                elif length and len(data) == length:
-                    # Length based data (e.g. ACK)
-                    return data
-                elif not length and data[0] != self.system[0]:
-                    logging.error('Flushing data %s %d', data, len(data))
-                    data = b''
+                elif ack:
+                    if len(data) > 1:
+                        logging.error('Too long ack data %s', data.hex())
+                    return data[0]
+                elif len(data) < self.packet_len:
+                    time.sleep(0.01)
                     continue
-                checksum = self._get_checksum(data[0:-1])[0]
-                if checksum == data[-1]:
-                    return data
+                return self._validate_response(req_data, data)
+
         logging.error('timeout')
-        return data
+        return False
 
     def vallox_speed_value_to_number(self, value):
         return bin(value).count("1")
