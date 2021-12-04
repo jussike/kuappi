@@ -47,3 +47,9 @@ class FridgeAlarmDecision(AbstractDecision):
     def remote_snooze(self, **kwargs):
         self.control()
         self.zmq_pub.send('Snoozed for {} secs'.format(self.control_time))
+
+    def remote_ask_temp(self, **kwargs):
+        if self.old_data and TEMP in self.old_data:
+            self.zmq_pub.send('Fridge temperature is {}\u00b0C'.format(self.old_data[TEMP]))
+        else:
+            self.zmq_pub.send("Sensor didn't send temp yet")
