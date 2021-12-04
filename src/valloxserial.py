@@ -78,12 +78,16 @@ class ValloxSerial:
 
     def _send_loop(self):
         while not self.event.is_set():
-            item = self._get_item()
-            if not item:
-                time.sleep(1)
-                continue
-            callback = item[0]
-            callback(item)
+            try:
+                item = self._get_item()
+                if not item:
+                    time.sleep(1)
+                    continue
+                logging.info('Calling callback')
+                callback = item[0]
+                callback(item)
+            except Exception:
+                logging.exception('Exception when executing queue')
 
     def _get_item(self):
         try:
