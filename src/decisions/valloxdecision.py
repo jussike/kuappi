@@ -41,7 +41,7 @@ class ValloxDecision(AbstractDecision):
 
     def get_decision(self, data, _=None):
         if self.remote_controlled:
-            logging.info('Remote controlled to %d', self.remote_control_decision)
+            logging.debug('Remote controlled to %d', self.remote_control_decision)
             self.zmq_pub.send_alarm('Remote controlled to {} for {} secs'.format(self.remote_control_decision, self.control_time))
             return self.remote_control_decision
         else:
@@ -74,7 +74,7 @@ class ValloxDecision(AbstractDecision):
             logging.info('Humidity %s, setting 5', hum)
             return 5
         else:
-            logging.info('Humidity %s, setting %d', hum, self.speed_normal_min)
+            logging.debug('Humidity %s, setting %d', hum, self.speed_normal_min)
             return self.speed_normal_min
 
     def remote_speed(self, **kwargs):
