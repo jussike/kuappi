@@ -84,10 +84,22 @@ class ValloxDecision(AbstractDecision):
             logging.info('Controlling with cmd speed %d and time %d', cmd_speed, cmd_time)
             self.control(decision=cmd_speed, control_time=cmd_time)
         else:
-            speed = self.vallox.ask_vallox('speed')
-            if speed is None:
+            select = self.vallox.ask_vallox('select')
+            if select is None:
                 self.zmq_pub.send("Speed: Vallox didn't response any valid value")
                 return
+
+            if not select & 1:
+                self.zmq_pub.send("Speed: Vallox is off")
+                return
+
+            speed = self.vallox.ask_vallox('speed')
+            if speed is None:
+                self.zmq_pub.send("Speed: Vallox didn't response any valid value but its power is on")
+                return
             speed = self.vallox.vallox_speed_value_to_number(speed)
-            logging.info('Vallox told that speed is {}'.format(speed))
-            self.zmq_pub.send('Vallox told that speed is {}'.format(speed))
+            logging.info('Vallox speed is {}'.format(speed))
+            if self.remote_controlled:
+                self.zmq_pub.send('Vallox speed is {}, remote controlled to {}, {:.0f} secs remaining'.format(speed, self.remote_control_decision, self.remote_controlled))
+            else:
+                self.zmq_pub.send('Vallox speed is {}'.format(speed))
