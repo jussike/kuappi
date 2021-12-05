@@ -26,7 +26,7 @@ class AbstractDecision(metaclass=ABCMeta):
 
     def __init__(self, zmq=False):
         logging.info('Initializing decision super class')
-        self._remote_controlled = None
+        self._remote_controlled_timestamp = None
         self.remote_control_decision = False
         self.control_time = self.DEFAULT_CONTROL_TIME
         if zmq:
@@ -37,15 +37,16 @@ class AbstractDecision(metaclass=ABCMeta):
     def control(self, decision=None, control_time=None):
         self.remote_control_decision = decision if decision is not None else False
         self.control_time = control_time if control_time else self.DEFAULT_CONTROL_TIME
-        self._remote_controlled = time.monotonic()
+        self._remote_controlled_timestamp = time.monotonic()
 
     @property
     def remote_controlled(self):
-        if not self._remote_controlled:
+        if not self._remote_controlled_timestamp:
             return False
-        if time.monotonic() < self._remote_controlled + self.control_time:
-            return True
-        self._remote_controlled = None
+        remaining_control_time = self.control_time - (time.monotonic() - self._remote_controlled_timestamp)
+        if remaining_control_time > 0:
+            return remaining_control_time
+        self._remote_controlled_timestamp = None
         return False
 
     def on_message(self, msg):
