@@ -60,6 +60,17 @@ class ValloxSerial:
             self.ser.write(req_data)
             return self._wait_for_response(req_data=req_data)
 
+    def set_heating(self, cmd_setting, select_value):
+        heating_bit = 0x8
+        heating_light_bit = 0x20
+        if cmd_setting:
+            select_value |= heating_bit
+        else:
+            select_value &= ~heating_bit
+            select_value &= ~heating_light_bit
+        logging.info('Queuing select value {}'.format(select_value))
+        self.deque.append((self._set_attribute, 'select', select_value, True))
+
     def _power_off(self, item):
         logging.info('Poweroff callback')
         value = self.ask_vallox('select')
@@ -88,7 +99,10 @@ class ValloxSerial:
                     time.sleep(1)
                     continue
                 callback = item[0]
-                callback(item)
+                if len(item) >= 4:
+                    callback(item, item[3])
+                else:
+                    callback(item)
             except Exception:
                 logging.exception('Exception when executing queue')
 
@@ -132,7 +146,7 @@ class ValloxSerial:
         self.ser.reset_output_buffer()
 
     def _set_attribute(self, item, value_pass=None):
-        _, attribute, value = item
+        _, attribute, value = item[0:3]
         logging.info("Set attribute callback '%s' %s", attribute, value)
         control_data = self._get_control_data('host', attribute, value, value_pass)
         with self.lock:

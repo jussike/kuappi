@@ -103,3 +103,15 @@ class ValloxDecision(AbstractDecision):
                 self.zmq_pub.send('Vallox speed is {}, remote controlled to {}, {:.0f} secs remaining'.format(speed, self.remote_control_decision, self.remote_controlled))
             else:
                 self.zmq_pub.send('Vallox speed is {}'.format(speed))
+
+    def remote_air_heating(self, **kwargs):
+        heating_bit = 0x8
+        cmd_setting = kwargs['setting'] if kwargs and 'setting' in kwargs else None
+        select = self.vallox.ask_vallox('select')
+        if cmd_setting is None:
+            if select & heating_bit:
+                self.zmq_pub.send('Heating is on')
+            else:
+                self.zmq_pub.send('Heating is off')
+            return
+        self.vallox.set_heating(cmd_setting, select)
