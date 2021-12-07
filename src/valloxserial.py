@@ -47,11 +47,11 @@ class ValloxSerial:
         self.loop.start()
 
     def set_speed(self, speed):
-        self.deque.append((self._power_on,))
-        self.deque.append((self._set_attribute, 'speed', speed))
+        self.deque.append({'callback': self._power_on})
+        self.deque.append({'callback': self._set_attribute, 'attribute': 'speed', 'value': speed})
 
     def power_off(self):
-        self.deque.append((self._power_off,))
+        self.deque.append({'callback': self._power_off})
 
     def ask_vallox(self, attribute):
         req_data = self._get_request_data('host', attribute)
@@ -65,11 +65,18 @@ class ValloxSerial:
         heating_light_bit = 0x20
         if cmd_setting:
             select_value |= heating_bit
+            select_value |= heating_light_bit
         else:
             select_value &= ~heating_bit
             select_value &= ~heating_light_bit
-        logging.info('Queuing select value {}'.format(select_value))
-        self.deque.append((self._set_attribute, 'select', select_value, True))
+        logging.info('Queuing "select" value {}'.format(select_value))
+        self.deque.append({
+            'callback': self._set_attribute,
+            'attribute': 'select',
+            'value': select_value,
+            'value_pass': True,
+            'inform_remotes': True,
+        })
 
     def _power_off(self, item):
         logging.info('Poweroff callback')
@@ -79,7 +86,12 @@ class ValloxSerial:
             return
         poweroff_value = value & ~1
         if poweroff_value != value:
-            self._set_attribute((self._set_attribute, 'select', poweroff_value), value_pass=True)
+            self._set_attribute({
+                'callback': self._set_attribute,
+                'attribute': 'select',
+                'value': poweroff_value,
+                'value_pass': True
+            })
 
     def _power_on(self, item):
         logging.info('Poweron callback')
@@ -89,7 +101,12 @@ class ValloxSerial:
             return
         poweron_value = value | 1
         if poweron_value != value:
-            self._set_attribute((self._set_attribute, 'select', poweron_value), value_pass=True)
+            self._set_attribute({
+                'callback': self._set_attribute,
+                'attribute': 'select',
+                'value': poweron_value,
+                'value_pass': True
+            })
 
     def _send_loop(self):
         while not self.event.is_set():
@@ -98,11 +115,7 @@ class ValloxSerial:
                 if not item:
                     time.sleep(1)
                     continue
-                callback = item[0]
-                if len(item) >= 4:
-                    callback(item, item[3])
-                else:
-                    callback(item)
+                item['callback'](item)
             except Exception:
                 logging.exception('Exception when executing queue')
 
@@ -145,10 +158,9 @@ class ValloxSerial:
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
 
-    def _set_attribute(self, item, value_pass=None):
-        _, attribute, value = item[0:3]
-        logging.info("Set attribute callback '%s' %s", attribute, value)
-        control_data = self._get_control_data('host', attribute, value, value_pass)
+    def _set_attribute(self, item):
+        logging.info("Set attribute callback '%s' %s", item['attribute'], item['value'])
+        control_data = self._get_control_data('host', item['attribute'], item['value'], item.get('value_pass'))
         with self.lock:
             self._reset()
             self.ser.write(control_data)
@@ -157,11 +169,13 @@ class ValloxSerial:
                 logging.error('Missing ack')
                 self.deque.insert(0, item)
                 return
-            self.control.state = value
-            self._inform_remotes(attribute, value)
+            if item['attribute'] == 'speed':
+                self.control.state = item['value']
+            if 'inform_remotes' not in item or item['inform_remotes']:
+                self._inform_remotes(item['attribute'], item['value'], item.get('value_pass'))
 
-    def _inform_remotes(self, attribute, value):
-        control_data = self._get_control_data('remote_broadcast', attribute, value, value_pass=(attribute=='select'))
+    def _inform_remotes(self, attribute, value, value_pass):
+        control_data = self._get_control_data('remote_broadcast', attribute, value, value_pass)
         # This is an unacknowledged, so send it several times for making sure
         for _ in range(3):
             self.ser.write(control_data)
