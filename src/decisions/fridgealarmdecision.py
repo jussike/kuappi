@@ -1,4 +1,5 @@
 import logging
+import time
 
 from abstract import AbstractDecision
 from common import TEMP
@@ -14,6 +15,7 @@ class FridgeAlarmDecision(AbstractDecision):
         logging.info('Using FridgeAlarmDecision')
         self.cached_data_count = 0
         self.old_data = None
+        self.data_age = None
 
     def get_decision(self, data, output_state=None):
         if self.remote_controlled:
@@ -33,12 +35,13 @@ class FridgeAlarmDecision(AbstractDecision):
         else:
             self.cached_data_count = 0
             self.old_data = data
+            self.data_age = time.monotonic()
 
         if not data or TEMP not in data.keys():
             return None
 
         if data[TEMP] > self.hi_limit or data[TEMP] < self.low_limit:
-            self.zmq_pub.send_alarm('Alarm: Temperature {} is outside of the limits ({} - {})'.format(data[TEMP], self.low_limit, self.hi_limit))
+            self.zmq_pub.send_alarm('Alarm: Temperature {} is outside of the limits ({} - {}). Data age is {:.0f} minutes.'.format(data[TEMP], self.low_limit, self.hi_limit, (time.monotonic() - self.data_age) / 60))
             return True
 
         self.zmq_pub.normal()
@@ -50,6 +53,6 @@ class FridgeAlarmDecision(AbstractDecision):
 
     def remote_ask_temp(self, **kwargs):
         if self.old_data and TEMP in self.old_data:
-            self.zmq_pub.send('Fridge temperature is {}\u00b0C'.format(self.old_data[TEMP]))
+            self.zmq_pub.send('Fridge temperature is {}\u00b0C. Data age is {:.0f} minutes.'.format(self.old_data[TEMP], (time.monotonic() - self.data_age) / 60))
         else:
             self.zmq_pub.send("Sensor didn't send temp yet")
