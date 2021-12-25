@@ -85,13 +85,14 @@ class ValloxSerial:
             logging.error("poweroff: Vallox didn't return a valid response")
             return
         poweroff_value = value & ~1
-        if poweroff_value != value:
-            self._set_attribute({
-                'callback': self._set_attribute,
-                'attribute': 'select',
-                'value': poweroff_value,
-                'value_pass': True
-            })
+        if poweroff_value == value:
+            return
+        if self._set_attribute({
+            'callback': self._set_attribute,
+            'attribute': 'select',
+            'value': poweroff_value,
+            'value_pass': True}):
+            self.control.state = 0
 
     def _power_on(self, item):
         logging.info('Poweron callback')
@@ -168,11 +169,12 @@ class ValloxSerial:
             if not self._wait_for_ack(checksum):
                 logging.error('Missing ack')
                 self.deque.insert(0, item)
-                return
+                return False
             if item['attribute'] == 'speed':
                 self.control.state = item['value']
             if 'inform_remotes' not in item or item['inform_remotes']:
                 self._inform_remotes(item['attribute'], item['value'], item.get('value_pass'))
+            return True
 
     def _inform_remotes(self, attribute, value, value_pass):
         control_data = self._get_control_data('remote_broadcast', attribute, value, value_pass)
