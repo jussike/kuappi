@@ -81,8 +81,11 @@ class ValloxDecision(AbstractDecision):
         cmd_speed = kwargs['speed'] if kwargs and 'speed' in kwargs else None
         cmd_time = kwargs['time'] if kwargs and 'time' in kwargs else None
         if cmd_speed is not None:
-            logging.info('Controlling with cmd speed %d and time %d', cmd_speed, cmd_time)
-            self.control(decision=cmd_speed, control_time=cmd_time)
+            if cmd_time is not None:
+                logging.info('Controlling with cmd speed %d and time %d', cmd_speed, cmd_time)
+                self.control(decision=cmd_speed, control_time=cmd_time)
+            else:
+                self.vallox.set_speed(cmd_speed, update_state=False)
         else:
             select = self.vallox.ask_vallox('select')
             if select is None:

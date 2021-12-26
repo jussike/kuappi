@@ -46,9 +46,9 @@ class ValloxSerial:
             daemon=True)
         self.loop.start()
 
-    def set_speed(self, speed):
+    def set_speed(self, speed, update_state=True):
         self.deque.append({'callback': self._power_on})
-        self.deque.append({'callback': self._set_attribute, 'attribute': 'speed', 'value': speed})
+        self.deque.append({'callback': self._set_attribute, 'attribute': 'speed', 'value': speed, 'update_state': update_state})
 
     def power_off(self):
         self.deque.append({'callback': self._power_off})
@@ -170,7 +170,7 @@ class ValloxSerial:
                 logging.error('Missing ack')
                 self.deque.insert(0, item)
                 return False
-            if item['attribute'] == 'speed':
+            if item.get('update_state'):
                 self.control.state = item['value']
             if 'inform_remotes' not in item or item['inform_remotes']:
                 self._inform_remotes(item['attribute'], item['value'], item.get('value_pass'))
