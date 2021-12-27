@@ -85,7 +85,8 @@ class ValloxDecision(AbstractDecision):
                 logging.info('Controlling with cmd speed %d and time %d', cmd_speed, cmd_time)
                 self.control(decision=cmd_speed, control_time=cmd_time)
             else:
-                self.vallox.set_speed(cmd_speed, update_state=False)
+                cb = lambda: self.zmq_pub.send('Vallox speed is {}'.format(cmd_speed))
+                self.vallox.set_speed(cmd_speed, update_state=False, callback=cb)
         else:
             select = self.vallox.ask_vallox('select')
             if select is None:
@@ -117,4 +118,8 @@ class ValloxDecision(AbstractDecision):
             else:
                 self.zmq_pub.send('Heating is off')
             return
-        self.vallox.set_heating(cmd_setting, select)
+        if cmd_setting:
+            cb = lambda: self.zmq_pub.send('Heating is on')
+        else:
+            cb = lambda: self.zmq_pub.send('Heating is off')
+        self.vallox.set_heating(cmd_setting, select, callback=cb)

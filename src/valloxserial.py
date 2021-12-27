@@ -46,9 +46,15 @@ class ValloxSerial:
             daemon=True)
         self.loop.start()
 
-    def set_speed(self, speed, update_state=True):
+    def set_speed(self, speed, callback=None, update_state=True):
         self.deque.append({'callback': self._power_on})
-        self.deque.append({'callback': self._set_attribute, 'attribute': 'speed', 'value': speed, 'update_state': update_state})
+        self.deque.append({
+            'callback': self._set_attribute,
+            'attribute': 'speed',
+            'value': speed,
+            'update_state': update_state,
+            'ok_callback': callback,
+        })
 
     def power_off(self):
         self.deque.append({'callback': self._power_off})
@@ -60,7 +66,7 @@ class ValloxSerial:
             self.ser.write(req_data)
             return self._wait_for_response(req_data=req_data)
 
-    def set_heating(self, cmd_setting, select_value):
+    def set_heating(self, cmd_setting, select_value, callback=None):
         heating_bit = 0x8
         heating_light_bit = 0x20
         if cmd_setting:
@@ -76,6 +82,7 @@ class ValloxSerial:
             'value': select_value,
             'value_pass': True,
             'inform_remotes': True,
+            'ok_callback': callback,
         })
 
     def _power_off(self, item):
@@ -174,6 +181,9 @@ class ValloxSerial:
                 self.control.state = item['value']
             if 'inform_remotes' not in item or item['inform_remotes']:
                 self._inform_remotes(item['attribute'], item['value'], item.get('value_pass'))
+            callback = item.get('ok_callback')
+            if callback:
+                callback()
             return True
 
     def _inform_remotes(self, attribute, value, value_pass):
