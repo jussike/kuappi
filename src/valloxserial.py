@@ -36,7 +36,8 @@ class ValloxSerial:
 
     def __init__(self):
         logging.info('Initializing vallox serial')
-        self.ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=0.02)
+        self.ser = None
+        self.init_serial()
         self.checksum_byte = None
         self.lock = threading.RLock()
         self.deque = deque()
@@ -45,6 +46,9 @@ class ValloxSerial:
             target=self._send_loop,
             daemon=True)
         self.loop.start()
+
+    def init_serial(self):
+        self.ser = serial.Serial('/dev/usb_serial', 9600, timeout=0.02)
 
     def set_speed(self, speed, callback=None, update_state=True):
         self.deque.append({'callback': self._power_on})
@@ -163,8 +167,13 @@ class ValloxSerial:
         return bytes((checksum,))
 
     def _reset(self):
-        self.ser.reset_input_buffer()
-        self.ser.reset_output_buffer()
+        try:
+            self.ser.reset_input_buffer()
+            self.ser.reset_output_buffer()
+            return
+        except Exception:
+            logging.error('Re-initializing serial device')
+            self.init_serial()
 
     def _set_attribute(self, item):
         logging.info("Set attribute callback '%s' %s", item['attribute'], item['value'])
