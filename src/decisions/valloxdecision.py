@@ -3,8 +3,10 @@ import logging
 from abstract import AbstractDecision
 from common import HUM, TEMP
 from config import CONFIG
+from subprocess import Popen, DEVNULL
 from valloxserial import vallox_serial
 from valloxntc import get_vallox_temp
+import time
 
 
 class ValloxDecision(AbstractDecision):
@@ -21,6 +23,10 @@ class ValloxDecision(AbstractDecision):
         super().__init__(zmq=True)
         self.vallox = vallox_serial
         self._summer_speed_control = None
+        self._online_devices_count = 0
+        self._online_devices_timestamp = None
+        self._online_devices = CONFIG.get('online_devices', ("192.168.1.110", "192.168.1.111"))
+        self._ping_interval = CONFIG.get('ping_interval', 600)
 
     def summer_speed_control(self, data):
         raw = self.vallox.ask_vallox('intake_temp')
@@ -57,7 +63,7 @@ class ValloxDecision(AbstractDecision):
             elif self.humidity_decision(data) == self.speed_normal_min:
                 logging.info('Hot outside, minimizing speed: %d', self.speed_too_hot)
                 return self.speed_too_hot
-        return self.humidity_decision(data)
+        return self.humidity_decision(data) - self.online_devices_reduction()
 
     def humidity_decision(self, data):
         hum = data[HUM]
@@ -123,3 +129,39 @@ class ValloxDecision(AbstractDecision):
         else:
             cb = lambda: self.zmq_pub.send('Heating is off')
         self.vallox.set_heating(cmd_setting, select, callback=cb)
+
+    def online_devices_reduction(self):
+        online = self.online_devices()
+        if online == 0:
+            return 2
+        elif online == 1:
+            return 1
+        else:
+            return 0
+
+    def online_devices(self):
+        if self._online_devices_timestamp and \
+            self._online_devices_timestamp + self._ping_interval > time.monotonic():
+            return self._online_devices_count
+
+        self._online_devices_count = 0
+        PACKET_LOSS_MAX = 3
+
+        for device in self._online_devices:
+            packet_loss = 0
+            while packet_loss < PACKET_LOSS_MAX:
+                self.proc = Popen(
+                    ("ping", "-c1", "-q", "-W1", device),
+                    stdout=DEVNULL,
+                    stderr=DEVNULL,
+                )
+                self.proc.wait()
+                if not self.proc.returncode:
+                    self._online_devices_count += 1
+                    break
+                else:
+                    packet_loss += 1
+
+        self._online_devices_timestamp = time.monotonic()
+
+        return self._online_devices_count
