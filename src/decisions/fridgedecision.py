@@ -2,8 +2,8 @@ from abstract import AbstractDecision
 from common import TEMP
 
 class FridgeDecision(AbstractDecision):
-    soft_hi_limit = 3.5
-    soft_low_limit = 2.5
+    soft_hi_limit = 4
+    soft_low_limit = 3
     hard_hi_limit = 7
     hard_low_limit = 0
 
